@@ -1,6 +1,7 @@
 #ifndef __HGO_BLOCKCHAIN__
 #define __HGO_BLOCKCHAIN__
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include "exceptions.h"
 #include "block.h"
@@ -23,6 +24,8 @@ namespace HGO::CHAIN
             Blockchain &operator<<(const Block & blk);
             const Block &getLastBlock() const;
             const BLOCK_LIST &getChain() const;
+            void save(const std::string &path) const;
+            static Blockchain load(const std::string &path);
 
         protected:
             BLOCK_LIST _chain;

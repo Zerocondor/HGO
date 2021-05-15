@@ -4,11 +4,12 @@
 #include <stdexcept>
 #include <exception>
 #include <sstream>
+
 #include "block.h"
 
 namespace HGO::EXCEPTION
 {
-
+    
     class BlockchainException : public std::exception
     {
         public:

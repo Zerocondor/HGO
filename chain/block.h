@@ -4,8 +4,9 @@
 #include <sstream>
 #include <string>
 #include <chrono>
-#include <stdexcept>
 #include <sha256/sha256.h>
+#include <cstring>
+
 
 namespace HGO::CHAIN
 {
@@ -15,12 +16,17 @@ namespace HGO::CHAIN
     {
         friend Blockchain;
         friend std::ostream &operator<<(std::ostream &, const Block &);
+        static constexpr char const * BLOCK_HEADER = "<<BLK";
 
         public:
             using BLOCK_INDEX = unsigned long long;
+            
+            Block() = default;
             Block(const std::string &data);
             const std::string & getHash() const;
-            inline BLOCK_INDEX getBlockID() const {return _idx;} 
+            inline BLOCK_INDEX getBlockID() const {return _idx;}
+            std::string serialize() const;
+            static Block unserialize(const std::string &serialized); 
 
         protected:
 

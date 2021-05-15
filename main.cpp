@@ -8,15 +8,22 @@ using namespace HGO::EXCEPTION;
 int main(int argc, char ** argv)
 {
 
-    Blockchain chain;
-
-    Block Genesis("Genesis Block");
-    Block blk1("Mes premieres data");
-    
-    chain << Genesis << blk1;
     try {
-        Blockchain chain2(chain.getChain());
-        std::cout << chain << "\n\n"<<chain2;
+
+        Blockchain chain = Blockchain::load("blk.chain");
+        std::string data;
+        while(std::getline(std::cin, data))
+        {
+            if(data == "qq")
+                break;
+
+            Block nBlock(data);
+            chain.addBlock(nBlock);
+        }
+        std::cout<<chain;
+        std::cout<< "Saving chain to blk.chain";
+        chain.save("blk.chain");
+
     } catch (BlockchainException e) {
         std::cout<<"HGO Error => " << e.what()<<"\n";
     }

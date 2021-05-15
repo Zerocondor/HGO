@@ -28,7 +28,7 @@ bool Blockchain::verify() const {
     std::string prevHash = "";
     while(it != _chain.cend())
     {         
-        if(it->getHash() != it->_calculateHash() || prevHash == it->_previous_hash)
+        if(it->getHash() != it->_calculateHash() || prevHash != it->_previous_hash)
         {
             throw InconsistentChain(*it);
         }
@@ -56,6 +56,41 @@ const Block &Blockchain::getLastBlock() const
 const Blockchain::BLOCK_LIST & Blockchain::getChain() const
 {
     return _chain;
+}
+
+void Blockchain::save(const std::string &path) const
+{
+    if(_chain.empty())
+    {
+        throw BlockchainException("Chain is Empty, cannot serialize it !");
+    }
+
+    std::ofstream file(path, std::ios_base::out | std::ios_base::binary);
+    if(!file)
+        throw BlockchainException("Unable to use this file to save");
+
+    for(const auto & blk : _chain)
+    {
+        file<<blk.serialize()<<"\n";
+    }
+    file.close();
+}
+
+Blockchain Blockchain::load(const std::string &path)
+{
+
+    std::ifstream file(path,  std::ios_base::in | std::ios_base::binary);
+    if(!file)
+        throw BlockchainException("Unable to read the blockchain file : " + path);
+
+    std::string block;
+    Blockchain::BLOCK_LIST lst;
+    while(std::getline(file, block))
+    {
+        lst.push_back(Block::unserialize(block));
+    }
+    file.close();
+    return Blockchain(lst);
 }
 
 std::ostream & HGO::CHAIN::operator<<(std::ostream &o, const Blockchain & bc)
