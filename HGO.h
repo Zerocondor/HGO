@@ -8,4 +8,6 @@
 #include "chain/blockchain.h"
 #include "chain/exceptions.h"
 
+#include "token/wallet.h"
+
 #endif
