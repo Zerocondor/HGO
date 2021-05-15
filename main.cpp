@@ -3,6 +3,7 @@
 #include "HGO"
 
 using namespace HGO::CHAIN;
+using namespace HGO::EXCEPTION;
 
 int main(int argc, char ** argv)
 {
@@ -13,9 +14,14 @@ int main(int argc, char ** argv)
     Block blk1("Mes premieres data");
     
     chain << Genesis << blk1;
+    try {
+        Blockchain chain2(chain.getChain());
+        std::cout << chain << "\n\n"<<chain2;
+    } catch (BlockchainException e) {
+        std::cout<<"HGO Error => " << e.what()<<"\n";
+    }
 
-    Blockchain chain2(chain.getChain());
-    std::cout << chain << "\n\n"<<chain2;
+  
     
     return 0;
 }

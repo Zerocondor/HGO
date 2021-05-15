@@ -2,7 +2,7 @@
 #define __HGO_BLOCKCHAIN__
 #include <iostream>
 #include <vector>
-#include <stdexcept>
+#include "exceptions.h"
 #include "block.h"
 
 namespace HGO::CHAIN

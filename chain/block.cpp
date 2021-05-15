@@ -12,11 +12,11 @@ const std::string & HGO::CHAIN::Block::getHash() const
     return _hash;
 }
 
-void HGO::CHAIN::Block::_calculateHash()
+std::string HGO::CHAIN::Block::_calculateHash() const
 {
     std::ostringstream oss;
     oss << _idx << _previous_hash << _sTime << _data;
-    _hash = sha256(oss.str());
+    return sha256(oss.str());
 }
 
 std::ostream & HGO::CHAIN::operator<<(std::ostream & o, const HGO::CHAIN::Block &blk)

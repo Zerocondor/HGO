@@ -6,5 +6,6 @@
 
 #include "chain/block.h"
 #include "chain/blockchain.h"
+#include "chain/exceptions.h"
 
 #endif

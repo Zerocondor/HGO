@@ -1,31 +1,40 @@
 #include "blockchain.h"
 
 using namespace HGO::CHAIN;
+using namespace HGO::EXCEPTION;
 
 Blockchain::Blockchain(const BLOCK_LIST & blocks)
     : _chain(blocks)
 {
-    if(!verify())
-    {
-        throw std::logic_error("Chain is inconsistent");
-    }
+    verify();
 }
 
 void Blockchain::addBlock(Block blk) {
     if(_chain.empty())
     {
         blk._idx = 0;
-        blk._calculateHash();
+        blk._hash = blk._calculateHash();
         _chain.push_back(blk);
     } else {
         blk._idx = getLastBlock()._idx + 1;
         blk._previous_hash = getLastBlock().getHash();
-        blk._calculateHash();
+        blk._hash = blk._calculateHash();
         _chain.push_back(blk);
     }
 }
 
 bool Blockchain::verify() const {
+    BLOCK_LIST::const_iterator it = _chain.cbegin();
+    std::string prevHash = "";
+    while(it != _chain.cend())
+    {         
+        if(it->getHash() != it->_calculateHash() || prevHash == it->_previous_hash)
+        {
+            throw InconsistentChain(*it);
+        }
+        prevHash = it->getHash();  
+        ++it;
+    }
     return true;
 }
 
@@ -38,7 +47,7 @@ Blockchain & Blockchain::operator<<(const Block & blk)
 const Block &Blockchain::getLastBlock() const
 {
     if(_chain.empty()) {
-        throw std::logic_error("Chain is empty");
+        throw BlockchainException("Try to get last block from an empty chain");
     }
 
     return _chain.back();

@@ -20,10 +20,11 @@ namespace HGO::CHAIN
             using BLOCK_INDEX = unsigned long long;
             Block(const std::string &data);
             const std::string & getHash() const;
+            inline BLOCK_INDEX getBlockID() const {return _idx;} 
 
         protected:
 
-            void _calculateHash();
+            std::string _calculateHash() const;
 
             BLOCK_INDEX _idx;
             std::string _data;
