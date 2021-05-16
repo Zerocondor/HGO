@@ -1,5 +1,5 @@
 #include "block.h"
-#include "exceptions.h"
+#include "../exceptions.h"
 
 using namespace HGO::CHAIN;
 using namespace HGO::EXCEPTION;
@@ -20,6 +20,11 @@ std::string Block::_calculateHash() const
     std::ostringstream oss;
     oss << _idx << _previous_hash << _sTime << _data;
     return sha256(oss.str());
+}
+
+const std::string &Block::getData() const
+{
+    return _data;
 }
 
 std::string Block::serialize() const

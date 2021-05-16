@@ -24,6 +24,7 @@ namespace HGO::CHAIN
             Block() = default;
             Block(const std::string &data);
             const std::string & getHash() const;
+            const std::string & getData() const;
             inline BLOCK_INDEX getBlockID() const {return _idx;}
             std::string serialize() const;
             static Block unserialize(const std::string &serialized); 

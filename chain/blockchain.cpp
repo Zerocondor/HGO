@@ -40,7 +40,7 @@ bool Blockchain::verify() const {
 
 Blockchain & Blockchain::operator<<(const Block & blk)
 {
-    this->addBlock(blk);
+    addBlock(blk);
     return *this;
 }
 
@@ -75,6 +75,59 @@ void Blockchain::save(const std::string &path) const
     }
     file.close();
 }
+
+bool Blockchain::requestTransaction(const HGO::TOKEN::Transaction & tx)
+{
+    _txBuffer.push_front(tx);
+    _createTransactionBlock();
+    return true;
+}
+
+void Blockchain::_createTransactionBlock()
+{
+    if(_txBuffer.size() == MIN_TX_PER_BLOCK)
+    {
+        std::string blk_data = "TXNs:";
+        for(size_t i = 0; i < MIN_TX_PER_BLOCK; ++i)
+        {
+            std::string txSerialized = _txBuffer.back().serialize();
+            blk_data += "tx:" + std::to_string(txSerialized.size()) + txSerialized;
+            _txBuffer.pop_back();
+        }
+        Block newBlock(blk_data);
+        addBlock(newBlock);
+    }
+}
+
+Blockchain::T_LIST Blockchain::parseTransactions(const std::string &rawTx)
+{
+    
+    T_LIST result;
+    if(rawTx.substr(0,5) == "TXNs:")
+    {
+        std::istringstream input(rawTx);
+        input.ignore(5);
+        while(input)
+        {
+            input.ignore(3);
+            
+            std::size_t sz;
+            input >> sz;
+            
+            if(input && sz > 0)
+            {
+                char * buffer = new char[sz + 1]{0};
+                input.read(buffer, sz);
+                HGO::TOKEN::Transaction tx = HGO::TOKEN::Transaction::unserialize(std::string(buffer));
+                result.push_back(tx);
+                delete[] buffer;
+                buffer = nullptr;
+            }
+        }
+    }
+    return result;
+}
+
 
 Blockchain Blockchain::load(const std::string &path)
 {

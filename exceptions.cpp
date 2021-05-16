@@ -20,3 +20,6 @@ InconsistentChain::InconsistentChain(const HGO::CHAIN::Block &blk)
     <<"\t Block ID : "<<blk.getBlockID() << " with hash : "<<blk.getHash();
     m_what = oss.str();
 }
+
+WalletError::WalletError(const std::string &msg) : BlockchainException(msg)
+{}

@@ -5,7 +5,8 @@
 #include <exception>
 #include <sstream>
 
-#include "block.h"
+#include "chain/block.h"
+#include "token/wallet.h"
 
 namespace HGO::EXCEPTION
 {
@@ -26,6 +27,12 @@ namespace HGO::EXCEPTION
     {
         public:
             InconsistentChain(const HGO::CHAIN::Block &blk);
+    };
+
+    class WalletError : public BlockchainException
+    {
+        public:
+            WalletError(const std::string &msg);
     };
 
 }
