@@ -18,6 +18,7 @@
 #include "exceptions.h"
 #include "chain/block.h"
 #include "chain/blockchain.h"
+#include "chain/chainevent.h"
 
 #include "token/wallet.h"
 #include "token/transaction.h"

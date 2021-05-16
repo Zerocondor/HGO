@@ -53,13 +53,34 @@ void printHeader()
     <<"****************************************\n";
 }
 
+bool testHandler(const EVENTS::ChainEvent & evt)
+{
+    std::cout<<"Test des events\n\t";
+    evt.print();
+    std::cout<<"\n";
+    std::cout.flush();
+    return true;
+}
+
+
 int main(int argc, char ** argv)
 {
 
     ARGS commands = parseArgs(argc, argv);
     printHeader();
-    //Has init
 
+    EVENTS::NewBlockEvent nb;
+    EVENTS::NewTransactionEvent nt;
+    
+    EVENTS::ChainEventManager mgr;
+    mgr.registerCallback(testHandler);
+    mgr.dispatchEvent(nb);
+    mgr.dispatchEvent(nt);
+    std::cin.get();
+
+
+    return 0;
+    //Has init
     if(hasOption(commands, "init"))
     {
         Block genesis("HGO Genesis block");
