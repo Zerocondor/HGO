@@ -4,15 +4,14 @@
 
 using namespace HGO::CHAIN::EVENTS;
 
-void ChainEvent::eventName() const{
-    std::cout<<EVENT_NAME;
+std::string ChainEvent::eventName() const{
+    return EVENT_NAME;
 }
-
-void NewBlockEvent::eventName() const{
-    std::cout<<EVENT_NAME;
+std::string NewBlockEvent::eventName() const{
+    return EVENT_NAME;
 }
-void NewTransactionEvent::eventName() const{
-    std::cout<<EVENT_NAME;
+std::string NewTransactionEvent::eventName() const{
+    return EVENT_NAME;
 }
 
 ChainEvent::~ChainEvent() {}
@@ -31,9 +30,9 @@ ChainEventManager::ChainEventManager()
 ChainEventManager::ChainEventManager(ChainEventManager && o)
 {
     _running = o._running;
-    _threadDispatcher = std::move(o._threadDispatcher);
-    _registeredCallback = std::move(o._registeredCallback);
-    _eventBuffer = std::move(o._eventBuffer);
+    o._threadDispatcher.swap(_threadDispatcher);
+    o._registeredCallback.swap(_registeredCallback);
+    o._eventBuffer.swap(_eventBuffer);
 }
 
 ChainEventManager::~ChainEventManager()
@@ -69,7 +68,7 @@ bool ChainEventManager::unregisterCallback(const HANDLER_REF &idx)
 void ChainEventManager::_dispatchImpl() 
 {
     while(_running)
-    {
+    {  
         if(_eventBuffer.size()) {
             std::shared_ptr<ChainEvent> evt = _eventBuffer.back();
             EVENT_HANDLER copyHandlers = _registeredCallback; //Thread Safe avoid removing dispatcher while iterating

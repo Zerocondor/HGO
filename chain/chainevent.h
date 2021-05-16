@@ -14,7 +14,7 @@ namespace HGO::CHAIN::EVENTS
         constexpr static char const * EVENT_NAME = "CHAIN_EVENT";
         public:
             ChainEvent() = default;
-            virtual void eventName() const;
+            virtual std::string eventName() const;
             virtual ~ChainEvent() = 0;
     };
 
@@ -23,7 +23,7 @@ namespace HGO::CHAIN::EVENTS
         constexpr static char const * EVENT_NAME = "NEW_BLOCK";
         public:
             NewBlockEvent() = default;
-            virtual void eventName() const override;
+            virtual std::string eventName() const override;
             virtual ~NewBlockEvent() override;
     };
 
@@ -32,7 +32,7 @@ namespace HGO::CHAIN::EVENTS
         constexpr static char const * EVENT_NAME = "NEW_TRANSACTION";
         public:
             NewTransactionEvent() = default;
-            virtual void eventName() const override;
+            virtual std::string eventName() const override;
             virtual ~NewTransactionEvent() override;
     };
 

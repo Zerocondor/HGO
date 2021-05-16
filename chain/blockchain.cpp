@@ -162,7 +162,7 @@ Blockchain Blockchain::load(const std::string &path)
         lst.push_back(Block::unserialize(block));
     }
     file.close();
-    return std::move(Blockchain(lst));
+    return Blockchain(lst);
 }
 
 std::ostream & HGO::CHAIN::operator<<(std::ostream &o, const Blockchain & bc)
