@@ -5,8 +5,9 @@
 #include <vector>
 #include <deque>
 #include "../exceptions.h"
-#include "block.h"
 #include "../token/transaction.h"
+#include "chainevent.h"
+#include "block.h"
 
 namespace HGO::CHAIN
 {
@@ -23,10 +24,12 @@ namespace HGO::CHAIN
             constexpr static TRANSACTION_BUFFER::size_type MIN_TX_PER_BLOCK = 2;
             
         public:
-            Blockchain() = default;
+            Blockchain();
             Blockchain(const BLOCK_LIST & blocks);
+            
             void addBlock(Block blk);
             bool verify() const;
+            EVENTS::ChainEventManager &eventManager();
             Blockchain &operator<<(const Block & blk);
             const Block &getLastBlock() const;
             const BLOCK_LIST &getChain() const;
@@ -43,6 +46,7 @@ namespace HGO::CHAIN
 
             BLOCK_LIST _chain;
             TRANSACTION_BUFFER _txBuffer;
+            EVENTS::ChainEventManager _events;
             
     };
 

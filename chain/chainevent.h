@@ -14,25 +14,25 @@ namespace HGO::CHAIN::EVENTS
         constexpr static char const * EVENT_NAME = "CHAIN_EVENT";
         public:
             ChainEvent() = default;
-            virtual void print() const;
+            virtual void eventName() const;
             virtual ~ChainEvent() = 0;
     };
 
     class NewBlockEvent : public ChainEvent
     {
-        constexpr static char const * EVENT_NAME = "NB";
+        constexpr static char const * EVENT_NAME = "NEW_BLOCK";
         public:
             NewBlockEvent() = default;
-            virtual void print() const override;
+            virtual void eventName() const override;
             virtual ~NewBlockEvent() override;
     };
 
     class NewTransactionEvent : public ChainEvent
     {
-        constexpr static char const * EVENT_NAME = "NT";
+        constexpr static char const * EVENT_NAME = "NEW_TRANSACTION";
         public:
             NewTransactionEvent() = default;
-            virtual void print() const override;
+            virtual void eventName() const override;
             virtual ~NewTransactionEvent() override;
     };
 
@@ -47,7 +47,10 @@ namespace HGO::CHAIN::EVENTS
 
         public:
             ChainEventManager();
+            ChainEventManager(ChainEventManager && o);
             ~ChainEventManager();
+
+            void run();
             template<typename T>
             bool dispatchEvent(const T &event);
             HANDLER_REF registerCallback(EVENT_CALLBACK cb);

@@ -4,24 +4,36 @@
 
 using namespace HGO::CHAIN::EVENTS;
 
-void ChainEvent::print() const{
+void ChainEvent::eventName() const{
     std::cout<<EVENT_NAME;
 }
 
-void NewBlockEvent::print() const{
+void NewBlockEvent::eventName() const{
     std::cout<<EVENT_NAME;
 }
-void NewTransactionEvent::print() const{
+void NewTransactionEvent::eventName() const{
     std::cout<<EVENT_NAME;
 }
+
 ChainEvent::~ChainEvent() {}
 NewBlockEvent::~NewBlockEvent(){}
 NewTransactionEvent::~NewTransactionEvent(){}
 
+
+
+/***
+ * Event Manager
+ */
 ChainEventManager::ChainEventManager() 
-: _running(true)
+: _running(false)
+{}
+
+ChainEventManager::ChainEventManager(ChainEventManager && o)
 {
-    _threadDispatcher = std::thread(std::function<void(ChainEventManager *)>(&ChainEventManager::_dispatchImpl), this);
+    _running = o._running;
+    _threadDispatcher = std::move(o._threadDispatcher);
+    _registeredCallback = std::move(o._registeredCallback);
+    _eventBuffer = std::move(o._eventBuffer);
 }
 
 ChainEventManager::~ChainEventManager()
@@ -29,6 +41,15 @@ ChainEventManager::~ChainEventManager()
     _running = false;
     if(_threadDispatcher.joinable()) {
         _threadDispatcher.join();
+    }
+}
+
+void ChainEventManager::run()
+{
+    if(!_running)
+    {
+        _running = true;
+        _threadDispatcher = std::thread(std::function<void(ChainEventManager *)>(&ChainEventManager::_dispatchImpl), this);
     }
 }
 

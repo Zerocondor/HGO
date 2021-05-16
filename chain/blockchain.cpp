@@ -3,11 +3,18 @@
 using namespace HGO::CHAIN;
 using namespace HGO::EXCEPTION;
 
+Blockchain::Blockchain()
+{
+    _events.run();
+}
+
 Blockchain::Blockchain(const BLOCK_LIST & blocks)
     : _chain(blocks)
 {
     verify();
+    _events.run();
 }
+
 
 void Blockchain::addBlock(Block blk) {
     if(_chain.empty())
@@ -21,6 +28,9 @@ void Blockchain::addBlock(Block blk) {
         blk._hash = blk._calculateHash();
         _chain.push_back(blk);
     }
+
+    EVENTS::NewBlockEvent event;
+    _events.dispatchEvent(event);
 }
 
 bool Blockchain::verify() const {
@@ -36,6 +46,11 @@ bool Blockchain::verify() const {
         ++it;
     }
     return true;
+}
+
+EVENTS::ChainEventManager &Blockchain::eventManager()
+{
+    return _events;
 }
 
 Blockchain & Blockchain::operator<<(const Block & blk)
@@ -79,6 +94,10 @@ void Blockchain::save(const std::string &path) const
 bool Blockchain::requestTransaction(const HGO::TOKEN::Transaction & tx)
 {
     _txBuffer.push_front(tx);
+    
+    EVENTS::NewTransactionEvent event;
+    _events.dispatchEvent(event);
+
     _createTransactionBlock();
     return true;
 }
@@ -143,7 +162,7 @@ Blockchain Blockchain::load(const std::string &path)
         lst.push_back(Block::unserialize(block));
     }
     file.close();
-    return Blockchain(lst);
+    return std::move(Blockchain(lst));
 }
 
 std::ostream & HGO::CHAIN::operator<<(std::ostream &o, const Blockchain & bc)

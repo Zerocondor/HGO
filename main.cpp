@@ -53,15 +53,6 @@ void printHeader()
     <<"****************************************\n";
 }
 
-bool testHandler(const EVENTS::ChainEvent & evt)
-{
-    std::cout<<"Test des events\n\t";
-    evt.print();
-    std::cout<<"\n";
-    std::cout.flush();
-    return true;
-}
-
 
 int main(int argc, char ** argv)
 {
@@ -69,17 +60,6 @@ int main(int argc, char ** argv)
     ARGS commands = parseArgs(argc, argv);
     printHeader();
 
-    EVENTS::NewBlockEvent nb;
-    EVENTS::NewTransactionEvent nt;
-    
-    EVENTS::ChainEventManager mgr;
-    mgr.registerCallback(testHandler);
-    mgr.dispatchEvent(nb);
-    mgr.dispatchEvent(nt);
-    std::cin.get();
-
-
-    return 0;
     //Has init
     if(hasOption(commands, "init"))
     {
@@ -110,6 +90,14 @@ int main(int argc, char ** argv)
         {
             wal.unlockWallet(commands["wallet"]);
             std::cout<<wal;
+
+            chain.eventManager().registerCallback([&wal](const EVENTS::ChainEvent &ev) -> bool {
+                std::cout<<"\033[32m Wallet printed from event \033[0m\n"<<wal;
+                return true;
+            });
+
+            
+            std::cin.get();
         }
         
         
