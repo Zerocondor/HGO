@@ -21,5 +21,6 @@ InconsistentChain::InconsistentChain(const HGO::CHAIN::Block &blk)
     m_what = oss.str();
 }
 
-WalletError::WalletError(const std::string &msg) : BlockchainException(msg)
-{}
+WalletError::WalletError(const std::string &msg) : BlockchainException(msg){}
+ProtocolError::ProtocolError(const int & _errno, const std::string &msg) 
+: BlockchainException("Network Error : "  + msg + "\n" + strerror(_errno)) {}

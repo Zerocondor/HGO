@@ -56,7 +56,7 @@ void printHeader()
 
 bool eventHandler(const EVENTS::ChainEvent &ev)
 {
-    std::cout<<"\033[33m[NEW EVENT] - "<<ev.eventName()<<"\033[0m - New event received";
+    std::cout<<"\033[33m[NEW EVENT] - "<<ev.eventName()<<"\033[0m - New event received\n";
     return true;
 }
 
@@ -92,7 +92,6 @@ int main(int argc, char ** argv)
     try {
         Blockchain chain = Blockchain::load("blk.chain");
         chain.eventManager().registerCallback(eventHandler);
-        chain.eventManager().run();
         if(hasOption(commands, "wallet"))
         {
             Wallet wal(chain);

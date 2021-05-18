@@ -3,15 +3,24 @@ INCLUDES= -I libs/include
 LIB_STATICS=libs/lib/libsha256.a
 LIB_DIR=
 DYNAMIC_LIB= -lpthread
-TARGET=testHGO
-SOURCES= main.cpp chain/block.cpp chain/blockchain.cpp chain/chainevent.cpp exceptions.cpp token/wallet.cpp
+
+TARGET_TESTHGO=testHGO
+SOURCES_TESTHGO=testhgo.cpp
+
+TARGET_TESTPROTOCOL=testProtocol
+SOURCES_TESTPROTOCOL=hgo_protocol.cpp
+
+SOURCES= chain/block.cpp chain/blockchain.cpp chain/chainevent.cpp exceptions.cpp token/wallet.cpp hgo_protocol/p2p.cpp
 
 
-all:$(TARGET)
+all:$(TARGET_TESTHGO) $(TARGET_TESTPROTOCOL)
 
 
-$(TARGET) : $(SOURCES) $(LIB_STATICS)
-	$(GCC) $(SOURCES) $(LIB_STATICS) $(INCLUDES) $(LIB_DIR) $(DYNAMIC_LIB) -o $(TARGET)
+$(TARGET_TESTHGO) : $(SOURCES_TESTHGO) $(SOURCES) $(LIB_STATICS)
+	$(GCC) $(SOURCES_TESTHGO) $(SOURCES) $(LIB_STATICS) $(INCLUDES) $(LIB_DIR) $(DYNAMIC_LIB) -o $(TARGET_TESTHGO)
+
+$(TARGET_TESTPROTOCOL) : $(SOURCES_TESTPROTOCOL) $(SOURCES) $(LIB_STATICS)
+	$(GCC) $(SOURCES_TESTPROTOCOL) $(SOURCES) $(LIB_STATICS) $(INCLUDES) $(LIB_DIR) $(DYNAMIC_LIB) -o $(TARGET_TESTPROTOCOL)
 
 clean:
-	rm -rf $(TARGET)
+	rm -rf $(TARGET_TESTHGO) $(TARGET_TESTPROTOCOL)

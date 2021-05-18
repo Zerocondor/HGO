@@ -23,4 +23,6 @@
 #include "token/wallet.h"
 #include "token/transaction.h"
 
+#include "hgo_protocol/p2p.h"
+
 #endif

@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <exception>
 #include <sstream>
+#include <errno.h>
 
 #include "chain/block.h"
 #include "token/wallet.h"
@@ -33,6 +34,12 @@ namespace HGO::EXCEPTION
     {
         public:
             WalletError(const std::string &msg);
+    };
+
+    class ProtocolError : public BlockchainException
+    {
+        public:
+            ProtocolError(const int & _errno, const std::string &msg = "");
     };
 
 }
