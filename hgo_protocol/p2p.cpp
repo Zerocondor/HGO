@@ -14,6 +14,7 @@ HGOProtocolManager::~HGOProtocolManager()
 {
     stop();
 }
+
 bool HGOProtocolManager::stop()
 {
     if(_running) {
@@ -24,7 +25,6 @@ bool HGOProtocolManager::stop()
             _tAcceptor.join();
 
         for(auto & fd : _fds) {
-            std::cout<<"Closing peer\n";
             close(fd.fd);
         }
 
@@ -35,11 +35,14 @@ bool HGOProtocolManager::stop()
     }
     return !_running;
 };
+
 bool HGOProtocolManager::run(const unsigned short &port)
 {
     _socket_server = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
-    setsockopt(_socket_server, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    setsockopt(_socket_server, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)); //enable reusable socket
+
     if(_socket_server < 0) 
         throw ProtocolError(errno);
 
@@ -78,8 +81,57 @@ bool HGOProtocolManager::run(const unsigned short &port)
 
 bool HGOProtocolManager::connectToPeer(const std::string &ip_address, const unsigned short &port)
 {
+    
+    HGOPeer peer;
+    peer.ip_address = ip_address;
+    peer.port = port;
 
+    //Format IP
+    std::istringstream iss(ip_address);
+    int a,b,c,d;
+    (((iss>>a).ignore() >> b).ignore() >> c).ignore() >> d;  
+    unsigned char ip_split[4];
+    ip_split[3] = d;
+    ip_split[2] = c;
+    ip_split[1] = b;
+    ip_split[0] = a;
+    unsigned int ip_address_network = *reinterpret_cast<unsigned int*>(&ip_split);
 
+    //Format port
+    unsigned char rp[2];
+    rp[1] = port & 0xFF;
+    rp[0] = (port >> 8) & 0xFF;
+    unsigned short port_network = *reinterpret_cast<unsigned short*>(&rp);
+
+    sockaddr_in client;
+    client.sin_addr.s_addr = ip_address_network;
+    client.sin_port = port_network;
+    client.sin_family = AF_INET;
+
+    int SOCK_CLIENT = socket(AF_INET, SOCK_STREAM, 0);
+    if(SOCK_CLIENT == -1) {
+        std::cout<<"Unable to connect to peer : "<<ip_address<<":"<<port<<"\n";
+        std::cout<<"\t"<<strerror(errno)<<"\n";
+        return false;
+    }
+
+    int result = connect(SOCK_CLIENT, reinterpret_cast<sockaddr *>(&client), sizeof(client));
+    if(result == -1) {
+        std::cout<<"Unable to connect to peer : "<<ip_address<<":"<<port<<"\n";
+        std::cout<<"\t"<<strerror(errno)<<"\n";
+        return false;
+    }
+
+    pollfd fd;
+    fd.fd = SOCK_CLIENT;
+    fd.events = POLLIN | POLLRDHUP | POLLERR;
+    fd.revents = 0;
+    _mut.lock();
+    _fds.push_back(fd);
+    _peers.push_back(peer);
+    _mut.unlock();
+
+    _emitEvent(peer, EVENT_TYPE::NEW_OUTGOING);
 
     return true;
 }
@@ -123,11 +175,14 @@ void HGOProtocolManager::_acceptNewConnection()
         HGOPeer peer;
         peer.ip_address = oss.str();
         _peers.push_back(peer);
-        std::cout<<"New Peer : "<<peer.ip_address<<"\n";
+
+        _emitEvent(peer, EVENT_TYPE::NEW_INCOMING);
+
         _mut.unlock();
     }
 
 }
+
 void HGOProtocolManager::_messageHandler()
 {
     while(_running)
@@ -155,7 +210,7 @@ void HGOProtocolManager::_messageHandler()
                             std::cout<<"Error while reading : "<<strerror(errno)<<"\n";
                             continue;
                         } else if (result > 0) {
-                             std::cout<<"Peer ["<<current_peer.ip_address<<"] : " <<buffer;
+                             _emitEvent(current_peer, EVENT_TYPE::MESSAGE, buffer);
                         }
 
                     }
@@ -171,19 +226,73 @@ void HGOProtocolManager::_removePeer(const std::size_t &index)
 {
     if(index < _fds.size()) {
         HGOPeer peer = _peers[index];
-        std::cout<<"Peer : "<<peer.ip_address<< " has been removed \n";
         close(_fds[index].fd);
-
         _peers.erase(_peers.begin() + index);
         _fds.erase(_fds.begin() + index);
+
+        _emitEvent(peer, EVENT_TYPE::PEER_DISCONNECTED);
     }
 }
 
-bool HGOProtocolManager::sendTo(const HGOPeer& peer, const std::string & data)
+bool HGOProtocolManager::sendTo(const HGOPeer& peer, const std::string & data) const
 {
-    return true;
+    int idx = _getPeerIndex(peer);
+    int result = -1;
+    if(idx > -1) {
+        result = write(_fds[idx].fd, data.c_str(), data.size());
+    }
+
+    return (result != -1);
 }
-bool HGOProtocolManager::broadcast(const std::string & data)
+
+bool HGOProtocolManager::broadcast(const std::string & data) const
 {
-    return true;
+    _mut.lock();
+    bool everybodyReached = true;
+    for(const auto & peer : _peers)
+    {
+        if(!sendTo(peer, data))
+        {
+            everybodyReached = false;
+        }
+    }
+    _mut.unlock();
+    return everybodyReached;
+}
+
+int HGOProtocolManager::_getPeerIndex(const HGOPeer & peer) const
+{
+    if(_peers.empty())
+        return -1;
+
+    PEER_LIST::const_iterator it = std::find_if(_peers.cbegin(), _peers.cend(), [&peer](const HGOPeer &p)->bool{
+        return (peer == p);
+    });
+
+    if(it != _peers.cend())
+    {
+        return (it - _peers.cbegin());
+    } else {
+        return -1;
+    }
+}
+
+HGOProtocolManager::PEER_LIST HGOProtocolManager::getPeerList() const
+{
+    return _peers;
+}
+
+void HGOProtocolManager::addCallback(EVENT_CALLBACK cb)
+{
+    _mut.lock();
+    _callbacks.push_back(cb);
+    _mut.unlock();
+}
+
+void HGOProtocolManager::_emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data) const
+{
+    for(auto _cb : _callbacks)
+    {
+        _cb(peer, event, data);
+    }
 }
