@@ -1,3 +1,13 @@
+/**
+ * HGO Protocol
+ * This set of classes intend to manage the P2P network
+ * It will be able to launch a server listening on a specific port and connect to peer at same time 
+ * The structure is based on 2 threads one accepting new client and one polling on FileDescriptor event for incoming message
+ * Outgoing / Incoming connection are stored in the same container PEER_LIST
+ * 
+ * Some events are defined and thrown through each callback binded to the Class via HGOProtocolManager::addCallback(EVENT_CALLBACK) method
+ * 
+ */ 
 #ifndef __HGO_P2P__
 #define __HGO_P2P__
 #include <string>
@@ -21,10 +31,10 @@ namespace HGO::P2P
 {
     struct HGOPeer
     {
-        std::string peer_tag;
+        std::string peer_tag; //For future implementation
         std::string ip_address;
         unsigned short port;
-        bool isMasterNode;
+        bool isMasterNode; //for future implementation
         inline bool operator==(const HGOPeer &o) const {return (o.ip_address == ip_address && o.port == port);}
     };
 
@@ -40,7 +50,9 @@ namespace HGO::P2P
                     NEW_INCOMING,
                     NEW_OUTGOING,
                     PEER_DISCONNECTED,
-                    MESSAGE
+                    MESSAGE,
+                    SERVER_LAUNCHED,
+                    SERVER_STOPPED
                 };
                 using EVENT_CALLBACK = std::function<void(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data)>;
             protected:
@@ -75,8 +87,9 @@ namespace HGO::P2P
 
                 int _getPeerIndex(const HGOPeer & peer) const;
 
-                void _messageHandler();
-                void _acceptNewConnection();
+                void _messageHandler(); //thread 1
+                void _acceptNewConnection(); // thread 2
+
                 void _removePeer(const std::size_t &index);
                 void _emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data = "") const;
 

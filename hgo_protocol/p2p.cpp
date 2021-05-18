@@ -31,7 +31,7 @@ bool HGOProtocolManager::stop()
         _fds.clear();
         _peers.clear();
         close(_socket_server);
-        std::cout<<"Closing Server\n";
+        _emitEvent(HGOPeer(), EVENT_TYPE::SERVER_STOPPED);
     }
     return !_running;
 };
@@ -68,13 +68,16 @@ bool HGOProtocolManager::run(const unsigned short &port)
         close(_socket_server);
         throw ProtocolError(errno);
     }
-
-    std::cout<<"Server is running and listening on port : "<<port<<"\n";
     
     _running = true;
 
     _tAcceptor = std::thread(std::function<void(HGOProtocolManager*)>(&HGOProtocolManager::_acceptNewConnection), this);
     _tHandler = std::thread(std::function<void(HGOProtocolManager*)>(&HGOProtocolManager::_messageHandler), this);
+
+    //Use peer only to send port in event
+    HGOPeer server;
+    server.port = port;
+    _emitEvent(server, EVENT_TYPE::SERVER_LAUNCHED);
 
     return true;
 }
