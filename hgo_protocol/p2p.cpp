@@ -34,10 +34,16 @@ bool HGOProtocolManager::stop()
         _emitEvent(HGOPeer(), EVENT_TYPE::SERVER_STOPPED);
     }
     return !_running;
-};
+}
+
+unsigned short HGOProtocolManager::serverPort() const
+{
+    return _port;
+}
 
 bool HGOProtocolManager::run(const unsigned short &port)
 {
+    _port = port;
     _socket_server = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
 
@@ -178,12 +184,9 @@ void HGOProtocolManager::_acceptNewConnection()
         HGOPeer peer;
         peer.ip_address = oss.str();
         _peers.push_back(peer);
-
-        _emitEvent(peer, EVENT_TYPE::NEW_INCOMING);
-
         _mut.unlock();
+        _emitEvent(peer, EVENT_TYPE::NEW_INCOMING);
     }
-
 }
 
 void HGOProtocolManager::_messageHandler()
@@ -221,7 +224,7 @@ void HGOProtocolManager::_messageHandler()
             }
         }
         _mut.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
 
@@ -239,12 +242,13 @@ void HGOProtocolManager::_removePeer(const std::size_t &index)
 
 bool HGOProtocolManager::sendTo(const HGOPeer& peer, const std::string & data) const
 {
+    
     int idx = _getPeerIndex(peer);
     int result = -1;
     if(idx > -1) {
         result = write(_fds[idx].fd, data.c_str(), data.size());
     }
-
+    
     return (result != -1);
 }
 
@@ -252,16 +256,60 @@ bool HGOProtocolManager::broadcast(const std::string & data) const
 {
     _mut.lock();
     bool everybodyReached = true;
-    for(const auto & peer : _peers)
+    for(const auto & peer : _fds)
     {
-        if(!sendTo(peer, data))
-        {
+        int result = write(peer.fd, data.c_str(), data.size());
+        if(result == -1)
             everybodyReached = false;
-        }
     }
     _mut.unlock();
     return everybodyReached;
 }
+
+std::string HGOProtocolManager::sendAndWait(const HGOPeer &peer, const std::string & data)
+{
+    
+    _mut.try_lock();
+    int idx = _getPeerIndex(peer);
+    pollfd fd[1];
+    fd[0] = _fds[idx];
+    _mut.unlock();
+    sendTo(peer, data);
+  
+    while((poll(fd, 1, 0) < 1) && (!(fd[0].revents & POLLIN) || !(fd[0].revents & POLLRDHUP)))
+    ;;
+
+    if(fd[0].revents & POLLRDHUP)
+    {
+        return "";
+    }
+    
+    char buffer[1024]{0};
+    int result = -1;
+    std::string return_str;
+    result = read(fd[0].fd, buffer, 1024);
+    if(result > 0){
+        return_str += buffer;
+    }
+          
+    return return_str;
+}
+
+bool HGOProtocolManager::updatePeer(const HGOPeer &peer, bool isMasternode, const std::string tagname, const unsigned short & port)
+{
+    _mut.lock();
+    int idx = _getPeerIndex(peer);
+    if(idx == -1)
+        return false;
+
+    _peers[idx].isMasterNode = isMasternode;
+    _peers[idx].peer_tag = tagname;
+    _peers[idx].port = port;
+    _mut.unlock();
+    return true;
+}
+
+
 
 int HGOProtocolManager::_getPeerIndex(const HGOPeer & peer) const
 {

@@ -1,5 +1,5 @@
 #include <iostream>
-#include "HGO"
+#include <HGO>
 
 using std::cout;
 using std::cin;

@@ -10,6 +10,7 @@
  */ 
 #ifndef __HGO_P2P__
 #define __HGO_P2P__
+#include <iostream>
 #include <string>
 #include <sstream>
 #include <memory>
@@ -24,7 +25,6 @@
 #include <unistd.h>
 #include <poll.h>
 
-
 #include <errno.h>
 
 namespace HGO::P2P
@@ -38,14 +38,21 @@ namespace HGO::P2P
         inline bool operator==(const HGOPeer &o) const {return (o.ip_address == ip_address && o.port == port);}
     };
 
+    inline std::ostream &operator<<(std::ostream &o, const HGOPeer & peer) {
+        if(!peer.peer_tag.empty())
+            o<<"["<<peer.peer_tag<<"] ";
+        
+        return (o<<peer.ip_address<<":"<<peer.port).flush();
+    }
+
     class HGOProtocolManager
     {
-            using PEER_LIST = std::vector<HGOPeer>;
-            using POLL_LIST = std::vector<pollfd>;
-            
-            constexpr static unsigned int MAX_PEERS = 10;
+            protected:
+                using POLL_LIST = std::vector<pollfd>;
+                constexpr static unsigned int MAX_PEERS = 10;
             
             public:
+                using PEER_LIST = std::vector<HGOPeer>;
                 enum EVENT_TYPE {
                     NEW_INCOMING,
                     NEW_OUTGOING,
@@ -63,15 +70,21 @@ namespace HGO::P2P
                 HGOProtocolManager();
                 ~HGOProtocolManager();
 
+                //Server Section
                 bool run(const unsigned short &port = 2016);
                 bool stop();
+                unsigned short serverPort() const;
+
+                //Peer Section
                 bool connectToPeer(const std::string &ip_address, const unsigned short &port);
                 bool disconnectPeer(const HGOPeer &peer);
-                
                 bool sendTo(const HGOPeer& peer, const std::string & data) const;
                 bool broadcast(const std::string & data) const;
-
+                std::string sendAndWait(const HGOPeer &peer, const std::string & data);
+                bool updatePeer(const HGOPeer &peer, bool isMasternode, const std::string tagname = "", const unsigned short & port = 0);
                 PEER_LIST getPeerList() const;
+
+                //Callback section
                 void addCallback(EVENT_CALLBACK cb);
 
             protected:

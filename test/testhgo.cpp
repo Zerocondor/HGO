@@ -1,6 +1,6 @@
 #include <iostream>
 #include <map>
-#include "HGO"
+#include <HGO>
 
 using namespace HGO::CHAIN;
 using namespace HGO::EXCEPTION;
