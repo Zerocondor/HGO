@@ -46,12 +46,12 @@ bool hasOption(const ARGS & args, const std::string & search)
 
 
 using namespace HGO::P2P;
-static HGOProtocolManager server;
+static HGONetworkManager server;
 
-HGOProtocolManager::PEER_LIST parsePeer(const std::string &peers_lst)
+HGONetworkManager::PEER_LIST parsePeer(const std::string &peers_lst)
 {
   
-    HGOProtocolManager::PEER_LIST returned_peers;
+    HGONetworkManager::PEER_LIST returned_peers;
     std::cout<<"\033[31m[Received peer list]\033[0m"<<peers_lst<<"\n";
     std::string::size_type pos = std::string::npos;
     std::string::size_type previousPos = 0;
@@ -93,7 +93,7 @@ void processMessage(const HGOPeer &peer, const std::string & msg)
     {
             std::cout<<"\033[32m["<<peer<<"]\033[0m - requested peer list\n";
             std::cout.flush();
-            HGOProtocolManager::PEER_LIST _peers = server.getPeerList();
+            HGONetworkManager::PEER_LIST _peers = server.getPeerList();
             std::string plist_message = "";
             for(const auto & p : _peers) {
                 if(p == peer)
@@ -121,9 +121,9 @@ void processMessage(const HGOPeer &peer, const std::string & msg)
 }
 
 
-void callback(const HGOPeer &peer, const HGOProtocolManager::EVENT_TYPE & event, const std::string &data)
+void callback(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data)
 {
-    using EV = HGOProtocolManager::EVENT_TYPE;
+    using EV = HGONetworkManager::EVENT_TYPE;
     
     switch(event)
     {

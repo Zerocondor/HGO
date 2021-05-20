@@ -1,21 +1,21 @@
-#include "p2p.h"
+#include "network_manager.h"
 #include "../exceptions.h"
 
 using namespace HGO::P2P;
 using namespace HGO::EXCEPTION;
 
-std::mutex HGOProtocolManager::_mut;
+std::mutex HGONetworkManager::_mut;
 
-HGOProtocolManager::HGOProtocolManager() 
+HGONetworkManager::HGONetworkManager() 
 : _running(false), _socket_server(-1), _port(DEFAULT_PORT)
 {}
 
-HGOProtocolManager::~HGOProtocolManager()
+HGONetworkManager::~HGONetworkManager()
 {
     stop();
 }
 
-bool HGOProtocolManager::stop()
+bool HGONetworkManager::stop()
 {
     if(_running) {
         _running = false;
@@ -36,12 +36,12 @@ bool HGOProtocolManager::stop()
     return !_running;
 }
 
-unsigned short HGOProtocolManager::serverPort() const
+unsigned short HGONetworkManager::serverPort() const
 {
     return _port;
 }
 
-bool HGOProtocolManager::run(const unsigned short &port)
+bool HGONetworkManager::run(const unsigned short &port)
 {
     _port = port;
     _socket_server = socket(AF_INET, SOCK_STREAM, 0);
@@ -77,8 +77,8 @@ bool HGOProtocolManager::run(const unsigned short &port)
     
     _running = true;
 
-    _tAcceptor = std::thread(std::function<void(HGOProtocolManager*)>(&HGOProtocolManager::_acceptNewConnection), this);
-    _tHandler = std::thread(std::function<void(HGOProtocolManager*)>(&HGOProtocolManager::_messageHandler), this);
+    _tAcceptor = std::thread(std::function<void(HGONetworkManager*)>(&HGONetworkManager::_acceptNewConnection), this);
+    _tHandler = std::thread(std::function<void(HGONetworkManager*)>(&HGONetworkManager::_messageHandler), this);
 
     //Use peer only to send port in event
     HGOPeer server;
@@ -88,7 +88,7 @@ bool HGOProtocolManager::run(const unsigned short &port)
     return true;
 }
 
-bool HGOProtocolManager::connectToPeer(const std::string &ip_address, const unsigned short &port)
+bool HGONetworkManager::connectToPeer(const std::string &ip_address, const unsigned short &port)
 {
     
     HGOPeer peer;
@@ -148,7 +148,7 @@ bool HGOProtocolManager::connectToPeer(const std::string &ip_address, const unsi
     return true;
 }
 
-void HGOProtocolManager::_acceptNewConnection()
+void HGONetworkManager::_acceptNewConnection()
 {
     while(_running) {
         sockaddr_in client_infos;
@@ -192,7 +192,7 @@ void HGOProtocolManager::_acceptNewConnection()
     }
 }
 
-void HGOProtocolManager::_messageHandler()
+void HGONetworkManager::_messageHandler()
 {
     while(_running)
     {       
@@ -231,7 +231,7 @@ void HGOProtocolManager::_messageHandler()
     }
 }
 
-void HGOProtocolManager::_removePeer(const std::size_t &index)
+void HGONetworkManager::_removePeer(const std::size_t &index)
 {
     if(index < _fds.size()) {
         HGOPeer peer = _peers[index];
@@ -243,7 +243,7 @@ void HGOProtocolManager::_removePeer(const std::size_t &index)
     }
 }
 
-bool HGOProtocolManager::sendTo(const HGOPeer& peer, const std::string & data) const
+bool HGONetworkManager::sendTo(const HGOPeer& peer, const std::string & data) const
 {
     
     int idx = _getPeerIndex(peer);
@@ -256,7 +256,7 @@ bool HGOProtocolManager::sendTo(const HGOPeer& peer, const std::string & data) c
     return (result != -1);
 }
 
-bool HGOProtocolManager::broadcast(const std::string & data) const
+bool HGONetworkManager::broadcast(const std::string & data) const
 {
     bool everybodyReached = true;
     for(const auto & peer : _fds)
@@ -269,7 +269,7 @@ bool HGOProtocolManager::broadcast(const std::string & data) const
     return everybodyReached;
 }
 
-std::string HGOProtocolManager::sendAndWait(const HGOPeer &peer, const std::string & data)
+std::string HGONetworkManager::sendAndWait(const HGOPeer &peer, const std::string & data)
 {
     pollfd fd[1];
     int idx = _getPeerIndex(peer);   
@@ -297,7 +297,7 @@ std::string HGOProtocolManager::sendAndWait(const HGOPeer &peer, const std::stri
     return return_str;
 }
 
-bool HGOProtocolManager::updatePeer(const HGOPeer &peer, bool isMasternode, const std::string tagname, const unsigned short & port)
+bool HGONetworkManager::updatePeer(const HGOPeer &peer, bool isMasternode, const std::string tagname, const unsigned short & port)
 {
     
     int idx = _getPeerIndex(peer);
@@ -313,7 +313,7 @@ bool HGOProtocolManager::updatePeer(const HGOPeer &peer, bool isMasternode, cons
 
 
 
-int HGOProtocolManager::_getPeerIndex(const HGOPeer & peer) const
+int HGONetworkManager::_getPeerIndex(const HGOPeer & peer) const
 {
     if(_peers.empty())
         return -1;
@@ -330,19 +330,19 @@ int HGOProtocolManager::_getPeerIndex(const HGOPeer & peer) const
     }
 }
 
-HGOProtocolManager::PEER_LIST HGOProtocolManager::getPeerList() const
+HGONetworkManager::PEER_LIST HGONetworkManager::getPeerList() const
 {
     return _peers;
 }
 
-void HGOProtocolManager::addCallback(EVENT_CALLBACK cb)
+void HGONetworkManager::addCallback(EVENT_CALLBACK cb)
 {
     
     _callbacks.push_back(cb);
     
 }
 
-void HGOProtocolManager::_emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data) const
+void HGONetworkManager::_emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data) const
 {
     for(auto _cb : _callbacks)
     {

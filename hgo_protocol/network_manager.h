@@ -45,7 +45,7 @@ namespace HGO::P2P
         return (o<<peer.ip_address<<":"<<peer.port).flush();
     }
 
-    class HGOProtocolManager
+    class HGONetworkManager
     {
             protected:
                 using POLL_LIST = std::vector<pollfd>;
@@ -68,8 +68,8 @@ namespace HGO::P2P
 
             public:
                 constexpr static unsigned short DEFAULT_PORT = 2016;
-                HGOProtocolManager();
-                ~HGOProtocolManager();
+                HGONetworkManager();
+                ~HGONetworkManager();
 
                 //Server Section
                 bool run(const unsigned short &port = 2016);

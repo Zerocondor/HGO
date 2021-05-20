@@ -5,9 +5,9 @@ using std::cout;
 using std::cin;
 using namespace HGO::P2P;
 
-void testcb(const HGOPeer &peer, const HGOProtocolManager::EVENT_TYPE & event, const std::string &data)
+void testcb(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data)
 {
-    using EVENT_TYPE = HGOProtocolManager::EVENT_TYPE;
+    using EVENT_TYPE = HGONetworkManager::EVENT_TYPE;
     switch(event)
     {
         case EVENT_TYPE::SERVER_LAUNCHED:
@@ -34,7 +34,7 @@ void testcb(const HGOPeer &peer, const HGOProtocolManager::EVENT_TYPE & event, c
 int main(int argc, char ** argv)
 {
     try{
-        HGOProtocolManager mgr;
+        HGONetworkManager mgr;
         mgr.addCallback(testcb);
         mgr.run();
 
