@@ -58,6 +58,7 @@ namespace HGO::P2P
                     NEW_OUTGOING,
                     PEER_DISCONNECTED,
                     MESSAGE,
+                    MESSAGE_SENT,
                     SERVER_LAUNCHED,
                     SERVER_STOPPED
                 };
@@ -89,6 +90,7 @@ namespace HGO::P2P
 
             protected:
                 bool _running;
+                
                 PEER_LIST _peers;
                 POLL_LIST _fds;
 

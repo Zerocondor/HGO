@@ -47,16 +47,6 @@ bool hasOption(const ARGS & args, const std::string & search)
 
 using namespace HGO::P2P;
 static HGOProtocolManager server;
-static std::thread t1;
-
-void tick()
-{
-    while(!server.getPeerList().empty())
-    {
-        server.broadcast("<<message>>tick");
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }
-}
 
 HGOProtocolManager::PEER_LIST parsePeer(const std::string &peers_lst)
 {
@@ -70,18 +60,39 @@ HGOProtocolManager::PEER_LIST parsePeer(const std::string &peers_lst)
     while((pos = peers_lst.find_first_of(";", previousPos)) != std::string::npos)
     {
         std::string peer(peers_lst.cbegin() + previousPos, peers_lst.cbegin() + pos);
+        std::string::size_type posSemicolon = peer.find_first_of(':', 0);
+
+        if(posSemicolon == std::string::npos)
+            continue;
+
+        unsigned short port;
+        std::string ip_addr = peer.substr(0, posSemicolon);
+
+        std::istringstream iss(peer);
+        iss.ignore(posSemicolon + 1);
+
+        std::cout<<"Try peer "<<ip_addr;
+        if(iss>>port)
+        {
+            std::cout<<" port "<<port;
+            server.connectToPeer(ip_addr, port);
+        }    
+        std::cout<<"\n";
 
         previousPos = pos + 1;
     }
     return returned_peers;
 }
 
+static bool canbroadcast = true;
+
 void processMessage(const HGOPeer &peer, const std::string & msg)
 {
-    std::cout<<"\tRAW : "<<msg<<"\n";
+    canbroadcast = false;
     if(msg.substr(0,13) == "<<peer_list>>")
     {
             std::cout<<"\033[32m["<<peer<<"]\033[0m - requested peer list\n";
+            std::cout.flush();
             HGOProtocolManager::PEER_LIST _peers = server.getPeerList();
             std::string plist_message = "";
             for(const auto & p : _peers) {
@@ -100,20 +111,20 @@ void processMessage(const HGOPeer &peer, const std::string & msg)
         server.sendTo(peer, std::to_string(server.serverPort()));
         std::string peerList = server.sendAndWait(peer,"<<peer_list>>");
         parsePeer(peerList);
-        t1 = std::thread(tick);
     }
 
     if(msg.substr(0,11) == "<<message>>")
     {
         std::cout<<"\033[32m["<<peer<<"]\033[0m - Message received "<< msg << "\n";
     }
+    canbroadcast = true;
 }
 
 
 void callback(const HGOPeer &peer, const HGOProtocolManager::EVENT_TYPE & event, const std::string &data)
 {
     using EV = HGOProtocolManager::EVENT_TYPE;
-
+    
     switch(event)
     {
         case EV::SERVER_LAUNCHED:
@@ -122,7 +133,13 @@ void callback(const HGOPeer &peer, const HGOProtocolManager::EVENT_TYPE & event,
         case EV::SERVER_STOPPED:
             std::cout<<"Server stopped\n";
             break;
+        case EV::MESSAGE_SENT:
+            //std::cout<<peer<<" "<<std::time(nullptr)<<" <- "<<data<<"\n";
+            //std::cout.flush();
+            break;
         case EV::MESSAGE:
+            //std::cout<<peer<<" "<<std::time(nullptr)<<" -> "<<data<<"\n";
+            //std::cout.flush();
             processMessage(peer, data);
             break;
         case EV::NEW_OUTGOING:
@@ -137,7 +154,6 @@ void callback(const HGOPeer &peer, const HGOProtocolManager::EVENT_TYPE & event,
             iss >> pp.port;
             server.updatePeer(peer, false, "", pp.port); 
             std::cout<<"I Received the port : "<<pp.port<<"\n";
-
             std::cout<<"\033[33m["<< pp<<"]\033[0m - Has reached us\n";
             break;
         
@@ -171,18 +187,28 @@ int main(int argc, char ** argv)
        
     }
 
-    
+    std::thread t1([](){
+        while(!server.getPeerList().empty())
+        {
+            
+            if(!canbroadcast)
+                continue;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            server.broadcast("<<message>>coco");
+            
+        }
+    });
 
     std::string in;
     while( std::cin >> in)
     {
+        if(in == "b")
+            server.broadcast("<<message>>Coucou");
         if(in == "q")
             break;
     }
     server.stop();
-    if(t1.joinable()) {
-        t1.join();
-    }
-    
+    t1.join();
+
     return 0;
 }

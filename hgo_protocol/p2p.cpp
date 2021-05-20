@@ -94,7 +94,11 @@ bool HGOProtocolManager::connectToPeer(const std::string &ip_address, const unsi
     HGOPeer peer;
     peer.ip_address = ip_address;
     peer.port = port;
-
+    
+    if(_getPeerIndex(peer) != -1) {
+        return false;
+    }
+ 
     //Format IP
     std::istringstream iss(ip_address);
     int a,b,c,d;
@@ -135,10 +139,9 @@ bool HGOProtocolManager::connectToPeer(const std::string &ip_address, const unsi
     fd.fd = SOCK_CLIENT;
     fd.events = POLLIN | POLLRDHUP | POLLERR;
     fd.revents = 0;
-    _mut.lock();
+
     _fds.push_back(fd);
     _peers.push_back(peer);
-    _mut.unlock();
 
     _emitEvent(peer, EVENT_TYPE::NEW_OUTGOING);
 
@@ -165,7 +168,7 @@ void HGOProtocolManager::_acceptNewConnection()
             std::cout<<"Unable to accept this client\n";
         }
 
-        _mut.lock();
+        
         pollfd fd_client;
         fd_client.fd = socket_client;
         fd_client.events = POLLIN | POLLRDHUP | POLLERR;
@@ -184,7 +187,7 @@ void HGOProtocolManager::_acceptNewConnection()
         HGOPeer peer;
         peer.ip_address = oss.str();
         _peers.push_back(peer);
-        _mut.unlock();
+        
         _emitEvent(peer, EVENT_TYPE::NEW_INCOMING);
     }
 }
@@ -192,8 +195,7 @@ void HGOProtocolManager::_acceptNewConnection()
 void HGOProtocolManager::_messageHandler()
 {
     while(_running)
-    {
-        _mut.lock();
+    {       
         if(_fds.size())
         {
             int result = poll(_fds.data(), _fds.size(), 0);
@@ -203,6 +205,7 @@ void HGOProtocolManager::_messageHandler()
             } else if(result > 0) {
                 for(POLL_LIST::size_type i = 0 ; i < _fds.size(); ++i){
                     HGOPeer current_peer = _peers[i];
+
                     if(_fds[i].revents & POLLRDHUP) {
                         _removePeer(i);
                         continue;
@@ -223,7 +226,7 @@ void HGOProtocolManager::_messageHandler()
                 }
             }
         }
-        _mut.unlock();
+        
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
@@ -247,6 +250,7 @@ bool HGOProtocolManager::sendTo(const HGOPeer& peer, const std::string & data) c
     int result = -1;
     if(idx > -1) {
         result = write(_fds[idx].fd, data.c_str(), data.size());
+        _emitEvent(peer, EVENT_TYPE::MESSAGE_SENT, data);
     }
     
     return (result != -1);
@@ -254,7 +258,6 @@ bool HGOProtocolManager::sendTo(const HGOPeer& peer, const std::string & data) c
 
 bool HGOProtocolManager::broadcast(const std::string & data) const
 {
-    _mut.lock();
     bool everybodyReached = true;
     for(const auto & peer : _fds)
     {
@@ -262,20 +265,18 @@ bool HGOProtocolManager::broadcast(const std::string & data) const
         if(result == -1)
             everybodyReached = false;
     }
-    _mut.unlock();
+
     return everybodyReached;
 }
 
 std::string HGOProtocolManager::sendAndWait(const HGOPeer &peer, const std::string & data)
 {
-    
-    _mut.try_lock();
-    int idx = _getPeerIndex(peer);
     pollfd fd[1];
+    int idx = _getPeerIndex(peer);   
     fd[0] = _fds[idx];
-    _mut.unlock();
+    _fds[idx].events = 0;
     sendTo(peer, data);
-  
+
     while((poll(fd, 1, 0) < 1) && (!(fd[0].revents & POLLIN) || !(fd[0].revents & POLLRDHUP)))
     ;;
 
@@ -291,13 +292,14 @@ std::string HGOProtocolManager::sendAndWait(const HGOPeer &peer, const std::stri
     if(result > 0){
         return_str += buffer;
     }
-          
+    _fds[idx].events = POLLIN | POLLRDHUP;
+    _emitEvent(peer, EVENT_TYPE::MESSAGE, return_str);   
     return return_str;
 }
 
 bool HGOProtocolManager::updatePeer(const HGOPeer &peer, bool isMasternode, const std::string tagname, const unsigned short & port)
 {
-    _mut.lock();
+    
     int idx = _getPeerIndex(peer);
     if(idx == -1)
         return false;
@@ -305,7 +307,7 @@ bool HGOProtocolManager::updatePeer(const HGOPeer &peer, bool isMasternode, cons
     _peers[idx].isMasterNode = isMasternode;
     _peers[idx].peer_tag = tagname;
     _peers[idx].port = port;
-    _mut.unlock();
+    
     return true;
 }
 
@@ -335,9 +337,9 @@ HGOProtocolManager::PEER_LIST HGOProtocolManager::getPeerList() const
 
 void HGOProtocolManager::addCallback(EVENT_CALLBACK cb)
 {
-    _mut.lock();
+    
     _callbacks.push_back(cb);
-    _mut.unlock();
+    
 }
 
 void HGOProtocolManager::_emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data) const
