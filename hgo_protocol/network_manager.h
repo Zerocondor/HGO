@@ -8,8 +8,9 @@
  * Some events are defined and thrown through each callback binded to the Class via HGOProtocolManager::addCallback(EVENT_CALLBACK) method
  * 
  */ 
-#ifndef __HGO_P2P__
-#define __HGO_P2P__
+#ifndef __HGO_NETWORK__
+#define __HGO_NETWORK__
+
 #include <iostream>
 #include <string>
 #include <sstream>

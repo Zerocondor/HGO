@@ -33,6 +33,17 @@ void testcb(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, co
 
 int main(int argc, char ** argv)
 {
+    std::string dt("COUCOU");
+    Message msg;
+    msg.header.full_header = 0b00001101;
+    msg.msg_type = Message::TYPE::MESSAGE;
+    msg.msg_size = dt.size();
+    msg.str = dt;
+
+    std::cout<<"Original :"<<msg<<"\n\n\n";
+    std::cout<<"Other : "<<Message::fromByteArray(reinterpret_cast<const unsigned char *>(msg.data().data()));
+    
+    return 0;
     try{
         HGONetworkManager mgr;
         mgr.addCallback(testcb);

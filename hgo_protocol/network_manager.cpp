@@ -212,14 +212,16 @@ void HGONetworkManager::_messageHandler()
                     }
                     if(_fds[i].revents & POLLIN) {
                         char buffer[1024]{0};
-                        
-                        result = read(_fds[i].fd, buffer, 1024);                 
+                        std::string returnData;
+
+                        while((result = read(_fds[i].fd, buffer, 1024)) > 0)
+                            returnData += std::string(buffer, result);
                        
                         if(result == -1) {
                             std::cout<<"Error while reading : "<<strerror(errno)<<"\n";
                             continue;
                         } else if (result > 0) {
-                             _emitEvent(current_peer, EVENT_TYPE::MESSAGE, buffer);
+                             _emitEvent(current_peer, EVENT_TYPE::MESSAGE, returnData);
                         }
 
                     }
@@ -288,10 +290,9 @@ std::string HGONetworkManager::sendAndWait(const HGOPeer &peer, const std::strin
     char buffer[1024]{0};
     int result = -1;
     std::string return_str;
-    result = read(fd[0].fd, buffer, 1024);
-    if(result > 0){
-        return_str += buffer;
-    }
+    while((result = read(fd[0].fd, buffer, 1024)) > 0)
+        return_str += std::string(buffer, result);
+    
     _fds[idx].events = POLLIN | POLLRDHUP;
     _emitEvent(peer, EVENT_TYPE::MESSAGE, return_str);   
     return return_str;

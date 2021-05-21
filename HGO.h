@@ -24,5 +24,6 @@
 #include "token/transaction.h"
 
 #include "hgo_protocol/network_manager.h"
+#include "hgo_protocol/protocol.h"
 
 #endif
