@@ -1,7 +1,7 @@
 #include "network_manager.h"
 #include "../exceptions.h"
 
-using namespace HGO::P2P;
+using namespace HGO::NETWORK;
 using namespace HGO::EXCEPTION;
 
 std::mutex HGONetworkManager::_mut;
@@ -211,16 +211,16 @@ void HGONetworkManager::_messageHandler()
                         continue;
                     }
                     if(_fds[i].revents & POLLIN) {
-                        char buffer[1024]{0};
+                        char buffer[__HGO_NETWORK__READ_BUFFER]{0};
                         std::string returnData;
 
-                        while((result = read(_fds[i].fd, buffer, 1024)) > 0)
+                        while((result = read(_fds[i].fd, buffer, __HGO_NETWORK__READ_BUFFER)) > 0)
                             returnData += std::string(buffer, result);
                        
-                        if(result == -1) {
+                        if(result == -1 && errno != EAGAIN) {
                             std::cout<<"Error while reading : "<<strerror(errno)<<"\n";
                             continue;
-                        } else if (result > 0) {
+                        } else if (errno == EAGAIN) {
                              _emitEvent(current_peer, EVENT_TYPE::MESSAGE, returnData);
                         }
 
@@ -245,7 +245,7 @@ void HGONetworkManager::_removePeer(const std::size_t &index)
     }
 }
 
-bool HGONetworkManager::sendTo(const HGOPeer& peer, const std::string & data) const
+bool HGONetworkManager::sendTo(const HGOPeer& peer, const std::string & data) 
 {
     
     int idx = _getPeerIndex(peer);
@@ -287,10 +287,10 @@ std::string HGONetworkManager::sendAndWait(const HGOPeer &peer, const std::strin
         return "";
     }
     
-    char buffer[1024]{0};
+    char buffer[__HGO_NETWORK__READ_BUFFER]{0};
     int result = -1;
     std::string return_str;
-    while((result = read(fd[0].fd, buffer, 1024)) > 0)
+    while((result = read(fd[0].fd, buffer, __HGO_NETWORK__READ_BUFFER)) > 0)
         return_str += std::string(buffer, result);
     
     _fds[idx].events = POLLIN | POLLRDHUP;
@@ -343,10 +343,10 @@ void HGONetworkManager::addCallback(EVENT_CALLBACK cb)
     
 }
 
-void HGONetworkManager::_emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data) const
+void HGONetworkManager::_emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data) 
 {
     for(auto _cb : _callbacks)
     {
-        _cb(peer, event, data);
+        _cb(peer, event, data, this);
     }
 }

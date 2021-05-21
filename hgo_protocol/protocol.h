@@ -8,7 +8,7 @@
     case Message::TYPE::name :\
         return #name;
 
-namespace HGO::P2P
+namespace HGO::NETWORK
 {
     
     struct Message

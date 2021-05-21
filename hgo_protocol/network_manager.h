@@ -28,7 +28,9 @@
 
 #include <errno.h>
 
-namespace HGO::P2P
+#define __HGO_NETWORK__READ_BUFFER 1024
+
+namespace HGO::NETWORK
 {
     struct HGOPeer
     {
@@ -50,7 +52,7 @@ namespace HGO::P2P
     {
             protected:
                 using POLL_LIST = std::vector<pollfd>;
-                constexpr static unsigned int MAX_PEERS = 10;
+                constexpr static unsigned int MAX_PEERS = 150;
             
             public:
                 using PEER_LIST = std::vector<HGOPeer>;
@@ -63,7 +65,7 @@ namespace HGO::P2P
                     SERVER_LAUNCHED,
                     SERVER_STOPPED
                 };
-                using EVENT_CALLBACK = std::function<void(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data)>;
+                using EVENT_CALLBACK = std::function<void(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data, HGONetworkManager * server)>;
             protected:
                 using CB_LIST = std::vector<EVENT_CALLBACK>;     
 
@@ -80,7 +82,7 @@ namespace HGO::P2P
                 //Peer Section
                 bool connectToPeer(const std::string &ip_address, const unsigned short &port);
                 bool disconnectPeer(const HGOPeer &peer);
-                bool sendTo(const HGOPeer& peer, const std::string & data) const;
+                bool sendTo(const HGOPeer& peer, const std::string & data);
                 bool broadcast(const std::string & data) const;
                 std::string sendAndWait(const HGOPeer &peer, const std::string & data);
                 bool updatePeer(const HGOPeer &peer, bool isMasternode, const std::string tagname = "", const unsigned short & port = 0);
@@ -107,7 +109,7 @@ namespace HGO::P2P
                 void _acceptNewConnection(); // thread 2
 
                 void _removePeer(const std::size_t &index);
-                void _emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data = "") const;
+                void _emitEvent(const HGOPeer &peer, const EVENT_TYPE & event, const std::string &data = "") ;
 
                 CB_LIST _callbacks;
 

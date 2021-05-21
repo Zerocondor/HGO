@@ -45,7 +45,7 @@ bool hasOption(const ARGS & args, const std::string & search)
 }
 
 
-using namespace HGO::P2P;
+using namespace HGO::NETWORK;
 static HGONetworkManager server;
 
 HGONetworkManager::PEER_LIST parsePeer(const std::string &peers_lst)
@@ -121,7 +121,7 @@ void processMessage(const HGOPeer &peer, const std::string & msg)
 }
 
 
-void callback(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data)
+void callback(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data, HGONetworkManager * instance)
 {
     using EV = HGONetworkManager::EVENT_TYPE;
     

@@ -3,9 +3,9 @@
 
 using std::cout;
 using std::cin;
-using namespace HGO::P2P;
+using namespace HGO::NETWORK;
 
-void testcb(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data)
+void testcb(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data, HGONetworkManager * server)
 {
     using EVENT_TYPE = HGONetworkManager::EVENT_TYPE;
     switch(event)
@@ -18,6 +18,7 @@ void testcb(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, co
         break;
         case EVENT_TYPE::NEW_INCOMING:
             std::cout<<"\033[32m["<<peer.ip_address<<"] - New incoming connection \033[0m\n";
+            server->sendAndWait(peer, "fufu");
         break;
         case EVENT_TYPE::NEW_OUTGOING:
             std::cout<<"\033[33m["<<peer.ip_address<<"] - New outgoing connection \033[0m\n";
@@ -33,17 +34,6 @@ void testcb(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, co
 
 int main(int argc, char ** argv)
 {
-    std::string dt("COUCOU");
-    Message msg;
-    msg.header.full_header = 0b00001101;
-    msg.msg_type = Message::TYPE::MESSAGE;
-    msg.msg_size = dt.size();
-    msg.str = dt;
-
-    std::cout<<"Original :"<<msg<<"\n\n\n";
-    std::cout<<"Other : "<<Message::fromByteArray(reinterpret_cast<const unsigned char *>(msg.data().data()));
-    
-    return 0;
     try{
         HGONetworkManager mgr;
         mgr.addCallback(testcb);
