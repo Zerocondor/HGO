@@ -25,5 +25,6 @@
 
 #include "hgo_protocol/network_manager.h"
 #include "hgo_protocol/protocol.h"
+#include "hgo_protocol/p2p_server.h"
 
 #endif

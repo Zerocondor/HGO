@@ -17,7 +17,7 @@ namespace HGO::NETWORK
         enum class TYPE : unsigned int
         {
             NONE,
-            PEER_PORT,
+            PEER_INFORMATIONS,
             PEER_LIST,
             MESSAGE
         };
@@ -69,6 +69,14 @@ namespace HGO::NETWORK
             
             return msg;
         }
+        inline static Message fromByteArray(const char * bytes)
+        {          
+            return fromByteArray(reinterpret_cast<const char *>(bytes));
+        }
+        inline static Message fromByteArray(const std::string & str)
+        {          
+            return fromByteArray(reinterpret_cast<const char *>(str.c_str()));
+        }
     };
 
     constexpr char const * MSG_TYPE_STR(const Message::TYPE & t )
@@ -77,7 +85,7 @@ namespace HGO::NETWORK
         {
             __HGO_PROTOCOL__SWITCH_TYPE(NONE)
             __HGO_PROTOCOL__SWITCH_TYPE(MESSAGE)
-            __HGO_PROTOCOL__SWITCH_TYPE(PEER_PORT)
+            __HGO_PROTOCOL__SWITCH_TYPE(PEER_INFORMATIONS)
             __HGO_PROTOCOL__SWITCH_TYPE(PEER_LIST)
             default:
                 return "Unknown";

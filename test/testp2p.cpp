@@ -165,6 +165,16 @@ void callback(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, 
 int main(int argc, char ** argv)
 {
     ARGS _cmd = parseArgs(argc, argv);
+
+    P2PServer p;
+    p.startNetwork(2016);
+
+    while(std::cin.get() != 'q')
+        ;
+    
+    p.stopNetwork();
+
+    return 0;
     server.addCallback(callback);
 
     unsigned short server_port = 2016;

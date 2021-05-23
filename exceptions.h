@@ -42,6 +42,12 @@ namespace HGO::EXCEPTION
             ProtocolError(const int & _errno, const std::string &msg = "");
     };
 
+    class P2PError : public BlockchainException
+    {
+        public:
+            P2PError(const std::string &msg);
+    };
+
 }
 
 

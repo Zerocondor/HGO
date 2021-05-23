@@ -24,3 +24,4 @@ InconsistentChain::InconsistentChain(const HGO::CHAIN::Block &blk)
 WalletError::WalletError(const std::string &msg) : BlockchainException(msg){}
 ProtocolError::ProtocolError(const int & _errno, const std::string &msg) 
 : BlockchainException("Network Error : "  + msg + "\n" + strerror(_errno)) {}
+P2PError::P2PError(const std::string &msg) : BlockchainException(msg){}

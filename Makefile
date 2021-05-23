@@ -13,7 +13,7 @@ SOURCES_TESTPROTOCOL=test/hgo_protocol.cpp
 TARGET_TESTP2P=testP2p
 SOURCES_TESTP2P=test/testp2p.cpp
 
-SOURCES= chain/block.cpp chain/blockchain.cpp chain/chainevent.cpp exceptions.cpp token/wallet.cpp hgo_protocol/network_manager.cpp
+SOURCES= chain/block.cpp chain/blockchain.cpp chain/chainevent.cpp exceptions.cpp token/wallet.cpp hgo_protocol/network_manager.cpp hgo_protocol/p2p_server.cpp
 
 
 all:$(TARGET_TESTHGO) $(TARGET_TESTPROTOCOL) $(TARGET_TESTP2P)
