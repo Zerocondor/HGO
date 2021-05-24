@@ -18,6 +18,15 @@ P2PServer::~P2PServer()
     stopNetwork();
 }
 
+void P2PServer::setMasterNode(bool value)
+{
+    _isMasterNode = value;
+}
+void P2PServer::setTagName(const std::string &value)
+{
+    _tagName = value;
+}
+
 void P2PServer::startNetwork(const unsigned short &port)
 {
     using namespace std::placeholders;

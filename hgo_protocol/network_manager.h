@@ -39,6 +39,23 @@ namespace HGO::NETWORK
         unsigned short port;
         bool isMasterNode; //for future implementation
         inline bool operator==(const HGOPeer &o) const {return (o.ip_address == ip_address && o.port == port);}
+        inline static HGOPeer fromString(const std::string &str)
+        {
+            HGOPeer result;
+            std::string::size_type posSColon = str.find_first_of(':',0);
+            if(posSColon != std::string::npos)
+            {
+                std::istringstream iss(std::string(str.cbegin() + posSColon + 1, str.cend()));
+                result.ip_address = std::string(str.cbegin(), str.cbegin() + posSColon);
+                if(!(iss>>result.port)) {
+                    result.port = 2016;
+                }
+            } else {
+                result.ip_address = str;
+                result.port = 2016;
+            }
+            return result;    
+        }
     };
 
     inline std::ostream &operator<<(std::ostream &o, const HGOPeer & peer) {

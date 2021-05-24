@@ -18,6 +18,8 @@ namespace HGO::NETWORK
             void startNetwork(const unsigned short &port);
             void stopNetwork();
 
+            void setMasterNode(bool value);
+            void setTagName(const std::string &value);
 
             bool connectToNode(const std::string &ip_address, const unsigned short &port);
             Message requestMessage(const HGOPeer &peer, const Message & msg);
@@ -35,8 +37,8 @@ namespace HGO::NETWORK
             std::thread _tTick;
 
             HGONetworkManager _network;
-            const std::string _tagName;
-            const bool _isMasterNode;
+            std::string _tagName;
+            bool _isMasterNode;
 
             MESSAGE_CALLBACK _newBlockHandler;
             MESSAGE_CALLBACK _newTransactionHandler;

@@ -15,6 +15,23 @@ Blockchain::Blockchain(const BLOCK_LIST & blocks)
     _events.run();
 }
 
+Blockchain::Blockchain (Blockchain && other)
+{
+    other._chain.swap(_chain);
+    other._txBuffer.swap(_txBuffer);
+    _events = std::move(other._events);
+    std::cout<<"Move Blockchain\n";
+}
+
+
+Blockchain &Blockchain::operator=(Blockchain && other)
+{
+    other._chain.swap(_chain);
+    other._txBuffer.swap(_txBuffer);
+    _events = std::move(other._events);
+    return *this;
+}
+
 
 void Blockchain::addBlock(Block blk) {
     if(_chain.empty())

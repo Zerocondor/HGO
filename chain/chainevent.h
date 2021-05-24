@@ -50,6 +50,8 @@ namespace HGO::CHAIN::EVENTS
             ChainEventManager(ChainEventManager && o);
             ~ChainEventManager();
 
+            ChainEventManager &operator=(ChainEventManager && other);
+
             void run();
             template<typename T>
             bool dispatchEvent(const T &event);

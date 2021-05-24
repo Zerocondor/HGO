@@ -35,6 +35,16 @@ ChainEventManager::ChainEventManager(ChainEventManager && o)
     o._eventBuffer.swap(_eventBuffer);
 }
 
+ChainEventManager &ChainEventManager::operator=(ChainEventManager && other)
+{
+    _running = other._running;
+    other._threadDispatcher.swap(_threadDispatcher);
+    other._registeredCallback.swap(_registeredCallback);
+    other._eventBuffer.swap(_eventBuffer);
+    std::cout<<"Swaping here";
+    return *this;  
+}
+
 ChainEventManager::~ChainEventManager()
 {
     _running = false;
