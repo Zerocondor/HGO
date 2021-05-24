@@ -18,7 +18,8 @@ void testcb(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, co
         break;
         case EVENT_TYPE::NEW_INCOMING:
             std::cout<<"\033[32m["<<peer.ip_address<<"] - New incoming connection \033[0m\n";
-            server->sendAndWait(peer, "fufu");
+            std::cout<<"Resp: "<<server->sendAndWait(peer, "fufu")<<"\n";
+            std::cout<<"Resp: "<<server->sendAndWait(peer, "fufu")<<"\n";
         break;
         case EVENT_TYPE::NEW_OUTGOING:
             std::cout<<"\033[33m["<<peer.ip_address<<"] - New outgoing connection \033[0m\n";
@@ -30,6 +31,7 @@ void testcb(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, co
             std::cout<<"\033[31m["<<peer.ip_address<<"] - Has been disconnected \033[0m\n";
         break;
     }
+    std::cout.flush();
 }
 
 int main(int argc, char ** argv)

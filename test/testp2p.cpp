@@ -46,8 +46,8 @@ bool hasOption(const ARGS & args, const std::string & search)
 
 
 using namespace HGO::NETWORK;
-static HGONetworkManager server;
-
+//static HGONetworkManager server;
+/*
 HGONetworkManager::PEER_LIST parsePeer(const std::string &peers_lst)
 {
   
@@ -159,23 +159,79 @@ void callback(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, 
         
     }
 }
+*/
 
-
+void msg(const Message &msg)
+{
+    std::cout<<"From CB"<<msg<<"\n";
+}
 
 int main(int argc, char ** argv)
 {
+
     ARGS _cmd = parseArgs(argc, argv);
 
-    P2PServer p;
-    p.startNetwork(2016);
+    
+    std::string tag;
+    unsigned short srv_port = 2016;
+    if(hasOption(_cmd, "tag"))
+    {
+        tag = _cmd["tag"];
+    }
+    
+    bool masternode = false;
+    if(hasOption(_cmd,"masternode"))
+        masternode = true;
 
-    while(std::cin.get() != 'q')
-        ;
+    P2PServer p(tag, masternode);
+
+    p.setBlockchainHandlers(msg, msg);
+    if(hasOption(_cmd, "srv"))
+    {
+        std::istringstream iss(_cmd["srv"]);
+        iss >> srv_port;
+        
+    }
+    p.startNetwork(srv_port);
+
+    if(hasOption(_cmd, "peer") && hasOption(_cmd, "port"))
+    {
+        std::string ip_address = _cmd["peer"];
+        unsigned short port;
+        std::istringstream iss(_cmd["port"]);
+        iss >> port;
+        p.connectToNode(ip_address, port);
+       
+    }
+
+    std::string command;
+
+    while(std::cin>>command)
+    {
+        if(command == "q")
+            break;
+
+        if(command == "block")
+        {
+            std::string blockData = "testblock";
+            Message blk;
+            blk.header.config.full_header = 0b00111000;
+            blk.msg_type = Message::TYPE::NEW_BLOCK;
+            blk.msg_size = blockData.size();
+            blk.str = blockData;
+            p.broadcast(blk);
+        }
+
+    }
+        
     
     p.stopNetwork();
 
     return 0;
-    server.addCallback(callback);
+
+    /////////////////////////FIRST TRY without P2PServer class////////////////////
+
+    /*server.addCallback(callback);
 
     unsigned short server_port = 2016;
     if(hasOption(_cmd, "srv"))
@@ -218,7 +274,7 @@ int main(int argc, char ** argv)
             break;
     }
     server.stop();
-    t1.join();
+    t1.join();*/
 
     return 0;
 }

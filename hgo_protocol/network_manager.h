@@ -28,7 +28,7 @@
 
 #include <errno.h>
 
-#define __HGO_NETWORK__READ_BUFFER 1024
+#define __HGO_NETWORK__READ_BUFFER 4096
 
 namespace HGO::NETWORK
 {
@@ -44,6 +44,8 @@ namespace HGO::NETWORK
     inline std::ostream &operator<<(std::ostream &o, const HGOPeer & peer) {
         if(!peer.peer_tag.empty())
             o<<"["<<peer.peer_tag<<"] ";
+        if(peer.isMasterNode)
+            o<<"(MasterNode) ";    
         
         return (o<<peer.ip_address<<":"<<peer.port).flush();
     }
@@ -78,12 +80,13 @@ namespace HGO::NETWORK
                 bool run(const unsigned short &port = 2016);
                 bool stop();
                 unsigned short serverPort() const;
+                bool isRunning() const;
 
                 //Peer Section
                 bool connectToPeer(const std::string &ip_address, const unsigned short &port);
                 bool disconnectPeer(const HGOPeer &peer);
                 bool sendTo(const HGOPeer& peer, const std::string & data);
-                bool broadcast(const std::string & data) const;
+                bool broadcast(const std::string & data) ;
                 std::string sendAndWait(const HGOPeer &peer, const std::string & data);
                 bool updatePeer(const HGOPeer &peer, bool isMasternode, const std::string tagname = "", const unsigned short & port = 0);
                 PEER_LIST getPeerList() const;

@@ -41,6 +41,11 @@ unsigned short HGONetworkManager::serverPort() const
     return _port;
 }
 
+bool HGONetworkManager::isRunning() const
+{
+    return _running;
+}
+
 bool HGONetworkManager::run(const unsigned short &port)
 {
     _port = port;
@@ -90,7 +95,9 @@ bool HGONetworkManager::run(const unsigned short &port)
 
 bool HGONetworkManager::connectToPeer(const std::string &ip_address, const unsigned short &port)
 {
-    
+    if(_peers.size() == MAX_PEERS) {
+            return false;
+    }
     HGOPeer peer;
     peer.ip_address = ip_address;
     peer.port = port;
@@ -151,6 +158,9 @@ bool HGONetworkManager::connectToPeer(const std::string &ip_address, const unsig
 void HGONetworkManager::_acceptNewConnection()
 {
     while(_running) {
+        if(_peers.size() == MAX_PEERS) {
+            continue;
+        }
         sockaddr_in client_infos;
         socklen_t sz = sizeof(client_infos);
 
@@ -199,6 +209,7 @@ void HGONetworkManager::_messageHandler()
         if(_fds.size())
         {
             int result = poll(_fds.data(), _fds.size(), 0);
+            
             if(result < 0) {
                 std::cout<<"Erreur poll : "<<strerror(errno)<<"\n";
                 continue;
@@ -213,14 +224,15 @@ void HGONetworkManager::_messageHandler()
                     if(_fds[i].revents & POLLIN) {
                         char buffer[__HGO_NETWORK__READ_BUFFER]{0};
                         std::string returnData;
-
-                        while((result = read(_fds[i].fd, buffer, __HGO_NETWORK__READ_BUFFER)) > 0)
-                            returnData += std::string(buffer, result);
-                       
+                        int dataReaden = -1;
+                        
+                        if((dataReaden = recv(_fds[i].fd, buffer, __HGO_NETWORK__READ_BUFFER,0)) > 0) {
+                            returnData += std::string(buffer, dataReaden);
+                        }
                         if(result == -1 && errno != EAGAIN) {
                             std::cout<<"Error while reading : "<<strerror(errno)<<"\n";
                             continue;
-                        } else if (errno == EAGAIN) {
+                        } else {
                              _emitEvent(current_peer, EVENT_TYPE::MESSAGE, returnData);
                         }
 
@@ -245,6 +257,17 @@ void HGONetworkManager::_removePeer(const std::size_t &index)
     }
 }
 
+bool HGONetworkManager::disconnectPeer(const HGOPeer & peer)
+{
+    int idx = _getPeerIndex(peer);
+    if(idx != -1)
+    {
+        _removePeer(idx);
+        return true;
+    }
+    return false;
+}
+
 bool HGONetworkManager::sendTo(const HGOPeer& peer, const std::string & data) 
 {
     
@@ -252,20 +275,29 @@ bool HGONetworkManager::sendTo(const HGOPeer& peer, const std::string & data)
     int result = -1;
     if(idx > -1) {
         result = write(_fds[idx].fd, data.c_str(), data.size());
-        _emitEvent(peer, EVENT_TYPE::MESSAGE_SENT, data);
+        if(result == -1)
+        {
+            std::cout<<strerror(errno)<<"\n";
+        } else {
+            _emitEvent(peer, EVENT_TYPE::MESSAGE_SENT, data);
+        }
     }
     
     return (result != -1);
 }
 
-bool HGONetworkManager::broadcast(const std::string & data) const
+bool HGONetworkManager::broadcast(const std::string & data) 
 {
     bool everybodyReached = true;
-    for(const auto & peer : _fds)
+    for(int i =0; i < _fds.size(); i++)
     {
+        pollfd peer = _fds[i];
         int result = write(peer.fd, data.c_str(), data.size());
-        if(result == -1)
+        if(result == -1) {
             everybodyReached = false;
+        } else {
+            _emitEvent(_peers[i], EVENT_TYPE::MESSAGE_SENT, data);
+        }
     }
 
     return everybodyReached;
@@ -278,10 +310,11 @@ std::string HGONetworkManager::sendAndWait(const HGOPeer &peer, const std::strin
     fd[0] = _fds[idx];
     _fds[idx].events = 0;
     sendTo(peer, data);
-
+    
     while((poll(fd, 1, 0) < 1) && (!(fd[0].revents & POLLIN) || !(fd[0].revents & POLLRDHUP)))
     ;;
-
+    
+    
     if(fd[0].revents & POLLRDHUP)
     {
         return "";
@@ -290,25 +323,25 @@ std::string HGONetworkManager::sendAndWait(const HGOPeer &peer, const std::strin
     char buffer[__HGO_NETWORK__READ_BUFFER]{0};
     int result = -1;
     std::string return_str;
-    while((result = read(fd[0].fd, buffer, __HGO_NETWORK__READ_BUFFER)) > 0)
+    if((result = read(fd[0].fd, buffer, __HGO_NETWORK__READ_BUFFER)) > 0){
         return_str += std::string(buffer, result);
+    }
     
     _fds[idx].events = POLLIN | POLLRDHUP;
+    
     _emitEvent(peer, EVENT_TYPE::MESSAGE, return_str);   
     return return_str;
 }
 
 bool HGONetworkManager::updatePeer(const HGOPeer &peer, bool isMasternode, const std::string tagname, const unsigned short & port)
 {
-    
     int idx = _getPeerIndex(peer);
     if(idx == -1)
         return false;
-
+    
     _peers[idx].isMasterNode = isMasternode;
     _peers[idx].peer_tag = tagname;
     _peers[idx].port = port;
-    
     return true;
 }
 
