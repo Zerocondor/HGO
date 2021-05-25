@@ -9,8 +9,7 @@ std::mutex P2PServer::_lockTick;
 P2PServer::P2PServer(const std::string & tagName, bool masternode)
 :_tagName(tagName), _isMasterNode(masternode)
 {
-    _newBlockHandler = nullptr;
-    _newTransactionHandler = nullptr;
+    _messagesHandler = nullptr;
 }
 
 P2PServer::~P2PServer()
@@ -51,17 +50,26 @@ void P2PServer::_tick()
     while(_network.isRunning())
     {
         if(_lockTick.try_lock()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            std::string testData = "TEST TICK BDCAST";
-            Message testMsg;
-            testMsg.header.config.full_header = 0b00111000;
-            testMsg.msg_type = Message::TYPE::MESSAGE;
-            testMsg.str = testData;
-            testMsg.msg_size = testData.size();
-            broadcast(testMsg);
+            std::this_thread::sleep_for(std::chrono::milliseconds(400));
+            if(_buffer.size())
+            {
+                auto evt = _buffer.back();
+                if(evt.first == nullptr)
+                {
+                    broadcast(evt.second);
+                } else {
+                    sendMessage(*evt.first.get(), evt.second);
+                }
+                _buffer.pop_back();
+            }
             _lockTick.unlock();
         }
     }
+}
+
+void P2PServer::pushTickMessage(std::shared_ptr<HGOPeer>peer, Message msg)
+{
+    _buffer.push_front({peer, msg});
 }
 
 bool P2PServer::connectToNode(const std::string &ip_address, const unsigned short &port)
@@ -127,6 +135,7 @@ bool P2PServer::_requestPeerList(const HGOPeer &p)
         if(response.msg_size == 0)
         {
             std::cout<<"No peer available........\n";
+            _sendAcquitment(p);
             return true;
         }
         std::istringstream iss(response.str);
@@ -150,9 +159,26 @@ bool P2PServer::_requestPeerList(const HGOPeer &p)
                 }
             }
         }
+        _sendAcquitment(p);
         return true;
     }
     return false;
+}
+
+bool P2PServer::_sendAcquitment(const HGOPeer & peer)
+{
+    Message msg;
+    msg.header.config.flags.isRequest = true;
+    msg.header.config.flags.isResponse = false;
+    msg.header.config.flags.isMasterNode = _isMasterNode;
+    msg.header.config.flags.isOfficialNode =  true;
+    msg.header.config.flags.isTest = true;
+    msg.header.config.flags.isForward = false;
+    msg.msg_type = Message::TYPE::ACQUITED;
+    msg.msg_size = 0;
+    msg.str = "";
+    sendMessage(peer, msg);
+    return true;
 }
 
 void P2PServer::_processMessage(const HGOPeer &p, const Message & msg)
@@ -186,7 +212,8 @@ void P2PServer::_processMessage(const HGOPeer &p, const Message & msg)
             response.msg_size = str.size();
             response.msg_type = msg.msg_type;
             sendMessage(p, response);       
-            _requestPeerList(p);       
+            _requestPeerList(p);
+
         break;
         case Message::TYPE::PEER_LIST:
 
@@ -204,19 +231,15 @@ void P2PServer::_processMessage(const HGOPeer &p, const Message & msg)
             sendMessage(p, response);
         break;
         case Message::TYPE::NEW_BLOCK:
-            if(_newBlockHandler)
-            {
-                _newBlockHandler(msg);
-            }
-        break;
         case Message::TYPE::NEW_TRANSACTION:
-            if(_newTransactionHandler)
-            {
-                _newTransactionHandler(msg);
-            }
-        break;
+        case Message::TYPE::REQUEST_BLOCK:
+        case Message::TYPE::SYNCHRONIZE:
         case Message::TYPE::MESSAGE:
-            std::cout<<"Message\n"<<msg.str<<"\n";
+        case Message::TYPE::ACQUITED:
+            if(_messagesHandler)
+            {
+                _messagesHandler(p, msg);
+            }
         break;
         default:
         break;
@@ -247,10 +270,9 @@ void P2PServer::broadcast(const Message &msg)
     _network.broadcast(msg.data());
 }
 
-void P2PServer::setBlockchainHandlers(MESSAGE_CALLBACK new_block, MESSAGE_CALLBACK new_tx)
+void P2PServer::setBlockchainHandlers(MESSAGE_CALLBACK message_handler)
 {
-    _newTransactionHandler = new_tx;
-    _newBlockHandler = new_block;
+     _messagesHandler = message_handler;
 }
 
 void P2PServer::_p2phandler(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data, HGONetworkManager * server)

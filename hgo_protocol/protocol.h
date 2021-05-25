@@ -19,9 +19,12 @@ namespace HGO::NETWORK
             NONE,
             PEER_INFORMATIONS,
             PEER_LIST,
+            ACQUITED,
             MESSAGE,
             NEW_TRANSACTION,
-            NEW_BLOCK
+            NEW_BLOCK,
+            REQUEST_BLOCK,
+            SYNCHRONIZE
         };
         //-----------
         Message() {
@@ -103,6 +106,9 @@ namespace HGO::NETWORK
             __HGO_PROTOCOL__SWITCH_TYPE(PEER_LIST)
             __HGO_PROTOCOL__SWITCH_TYPE(NEW_TRANSACTION)
             __HGO_PROTOCOL__SWITCH_TYPE(NEW_BLOCK)
+            __HGO_PROTOCOL__SWITCH_TYPE(REQUEST_BLOCK)
+            __HGO_PROTOCOL__SWITCH_TYPE(SYNCHRONIZE)
+            __HGO_PROTOCOL__SWITCH_TYPE(ACQUITED)
             default:
                 return "Unknown";
         }

@@ -31,10 +31,12 @@ namespace HGO::CHAIN
             Blockchain &operator=(Blockchain && other);
             Blockchain &operator=(const Blockchain & other) = delete;
             void addBlock(Block blk);
+            void createBlock(Block blk);
             bool verify() const;
             EVENTS::ChainEventManager &eventManager();
             Blockchain &operator<<(const Block & blk);
             const Block &getLastBlock() const;
+            const Block::BLOCK_INDEX getLastBlockID() const; 
             const BLOCK_LIST &getChain() const;
             void save(const std::string &path) const;
             

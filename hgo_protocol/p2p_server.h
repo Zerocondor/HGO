@@ -1,6 +1,8 @@
 #ifndef __HGO_P2PSERVER__
 #define __HGO_P2PSERVER__
 #include <string>
+#include <deque>
+#include <map>
 #include "protocol.h"
 #include "network_manager.h"
 
@@ -9,8 +11,8 @@ namespace HGO::NETWORK
     class P2PServer {
 
         public:
-            using MESSAGE_CALLBACK = std::function<void(const Message&)>;
-
+            using MESSAGE_CALLBACK = std::function<void(const HGOPeer & peer, const Message&)>;
+            using TICK_MSG_BUFFER = std::deque<std::pair<std::shared_ptr<HGOPeer>, Message>>;
         public:
             P2PServer(const std::string &tagName = "", bool masterNode = false);
             ~P2PServer();
@@ -25,7 +27,9 @@ namespace HGO::NETWORK
             Message requestMessage(const HGOPeer &peer, const Message & msg);
             void sendMessage(const HGOPeer &peer, const Message & msg);
             void broadcast(const Message &msg);
-            void setBlockchainHandlers(MESSAGE_CALLBACK new_block, MESSAGE_CALLBACK new_tx);
+            void setBlockchainHandlers(MESSAGE_CALLBACK messages);
+
+            void pushTickMessage(std::shared_ptr<HGOPeer>peer, Message msg);
 
         protected :
             void _p2phandler(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data, HGONetworkManager * server);
@@ -33,6 +37,7 @@ namespace HGO::NETWORK
 
             bool _requestPeerInfos(HGOPeer &p);
             bool _requestPeerList(const HGOPeer &p);
+            bool _sendAcquitment(const HGOPeer & p);
             void _tick();
             std::thread _tTick;
 
@@ -40,8 +45,8 @@ namespace HGO::NETWORK
             std::string _tagName;
             bool _isMasterNode;
 
-            MESSAGE_CALLBACK _newBlockHandler;
-            MESSAGE_CALLBACK _newTransactionHandler;
+            MESSAGE_CALLBACK _messagesHandler;
+            TICK_MSG_BUFFER _buffer;
             static std::mutex _lockTick;
 
     };

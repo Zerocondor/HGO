@@ -29,19 +29,30 @@ ChainEventManager::ChainEventManager()
 
 ChainEventManager::ChainEventManager(ChainEventManager && o)
 {
-    _running = o._running;
-    o._threadDispatcher.swap(_threadDispatcher);
+    if(o._running)
+    {
+        o._running = false;
+        if(o._threadDispatcher.joinable()) {
+            o._threadDispatcher.join();
+        }
+    }
     o._registeredCallback.swap(_registeredCallback);
     o._eventBuffer.swap(_eventBuffer);
 }
 
 ChainEventManager &ChainEventManager::operator=(ChainEventManager && other)
 {
-    _running = other._running;
-    other._threadDispatcher.swap(_threadDispatcher);
+    if(other._running)
+    {
+        other._running = false;
+        if(other._threadDispatcher.joinable()) {
+            other._threadDispatcher.join();
+        }
+    }
+    
     other._registeredCallback.swap(_registeredCallback);
     other._eventBuffer.swap(_eventBuffer);
-    std::cout<<"Swaping here";
+   
     return *this;  
 }
 

@@ -20,7 +20,6 @@ Blockchain::Blockchain (Blockchain && other)
     other._chain.swap(_chain);
     other._txBuffer.swap(_txBuffer);
     _events = std::move(other._events);
-    std::cout<<"Move Blockchain\n";
 }
 
 
@@ -32,8 +31,7 @@ Blockchain &Blockchain::operator=(Blockchain && other)
     return *this;
 }
 
-
-void Blockchain::addBlock(Block blk) {
+void Blockchain::createBlock(Block blk) {
     if(_chain.empty())
     {
         blk._idx = 0;
@@ -48,6 +46,18 @@ void Blockchain::addBlock(Block blk) {
 
     EVENTS::NewBlockEvent event;
     _events.dispatchEvent(event);
+}
+
+void Blockchain::addBlock(Block blk) {
+    
+    if(!_chain.empty() && blk.getBlockID() <= getLastBlock().getBlockID())
+        return;
+
+    _chain.push_back(blk);
+    if(!verify())
+    {
+        _chain.pop_back();
+    }
 }
 
 bool Blockchain::verify() const {
@@ -83,6 +93,14 @@ const Block &Blockchain::getLastBlock() const
     }
 
     return _chain.back();
+}
+
+const Block::BLOCK_INDEX Blockchain::getLastBlockID() const
+{
+    if(_chain.empty()) {
+        return 0;
+    }
+    return getLastBlock().getBlockID();
 }
 
 const Blockchain::BLOCK_LIST & Blockchain::getChain() const
@@ -131,7 +149,7 @@ void Blockchain::_createTransactionBlock()
             _txBuffer.pop_back();
         }
         Block newBlock(blk_data);
-        addBlock(newBlock);
+        createBlock(newBlock);
     }
 }
 
