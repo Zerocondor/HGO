@@ -4,20 +4,21 @@ using namespace HGO::APP;
 using namespace HGO::CHAIN;
 using namespace HGO::NETWORK;
 using namespace HGO::EXCEPTION;
+using namespace std::placeholders;
 
-MasterNode::MasterNode(int argc, char **argv)
+Wallet::Wallet(int argc, char **argv)
+    : _wallet(nullptr)
 {
     _parseArguments(argc, argv);
-    using namespace std::placeholders;
-    _chain.eventManager().registerCallback(std::bind(&MasterNode::_handleChainEvent, this, _1));
-    HGO::NETWORK::P2PServer::MESSAGE_CALLBACK cb = std::bind(&MasterNode::_handleP2PEvent, this, _1, _2);
-    _network.setBlockchainHandlers(cb); 
+    
+    HGO::NETWORK::P2PServer::MESSAGE_CALLBACK cb = std::bind(&Wallet::_handleP2PEvent, this, _1, _2);
+    _network.setBlockchainHandlers(cb);
 }
 
-MasterNode::~MasterNode()
+Wallet::~Wallet()
 {}
 
-bool MasterNode::_handleChainEvent(const HGO::CHAIN::EVENTS::ChainEvent &ev)
+bool Wallet::_handleChainEvent(const HGO::CHAIN::EVENTS::ChainEvent &ev)
 {
     if(ev.eventName() == "NEW_BLOCK")
     {
@@ -33,22 +34,16 @@ bool MasterNode::_handleChainEvent(const HGO::CHAIN::EVENTS::ChainEvent &ev)
 
     return true;
 }
-void MasterNode::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
+void Wallet::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
 {
     using TYPE = Message::TYPE;
-
     switch(msg.msg_type)
     {
         case TYPE::ACQUITED:
             _checkSynchState(peer);  
         break;
         case TYPE::NEW_BLOCK:
-            std::cout<<"\033[32m[NEW BLOCK RECEIVED]\n";
             _chain << Block::unserialize(msg.str);
-        break;
-        case TYPE::NEW_TRANSACTION:
-            std::cout<<"\033[32m[NEW TX RECEIVED] - " <<HGO::TOKEN::Transaction::unserialize(msg.str)<<"\n";
-            _chain.requestTransaction(HGO::TOKEN::Transaction::unserialize(msg.str));
         break;
         case TYPE::REQUEST_BLOCK:
             _processRequestBlock(peer, msg);
@@ -59,10 +54,10 @@ void MasterNode::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
     }
 }
 
-void MasterNode::_checkSynchState(const HGOPeer & peer)
+void Wallet::_checkSynchState(const HGOPeer & peer)
 {
     Message msg;
-    msg.header.config.full_header = 0b00011100;
+    msg.header.config.full_header = 0b00001000;
     msg.msg_type = Message::TYPE::SYNCHRONIZE;
 
     msg.str = std::to_string(_chain.getLastBlockID());
@@ -71,7 +66,7 @@ void MasterNode::_checkSynchState(const HGOPeer & peer)
     _network.pushTickMessage(std::make_shared<HGOPeer>(peer), msg); 
 }
 
-void MasterNode::_checkBlockID(const HGO::NETWORK::HGOPeer & peer, const HGO::NETWORK::Message &msg)
+void Wallet::_checkBlockID(const HGO::NETWORK::HGOPeer & peer, const HGO::NETWORK::Message &msg)
 {
     std::cout<<" My current block ID : "<< _chain.getLastBlockID()<< " | Block ID from peer: "<<msg.str<<"\n";
     std::istringstream iss(msg.str);
@@ -86,7 +81,7 @@ void MasterNode::_checkBlockID(const HGO::NETWORK::HGOPeer & peer, const HGO::NE
         std::cout<<" Im in late need to request from block ID :" << _chain.getLastBlockID() << "\n";
 
         Message msg;
-        msg.header.config.full_header = 0b00011100;
+        msg.header.config.full_header = 0b00001000;
         msg.msg_type = Message::TYPE::REQUEST_BLOCK;
         msg.str = std::to_string(_chain.getLastBlockID());
         msg.msg_size = msg.str.size();
@@ -98,7 +93,7 @@ void MasterNode::_checkBlockID(const HGO::NETWORK::HGOPeer & peer, const HGO::NE
     }
 }
 
-void MasterNode::_processRequestBlock(const HGO::NETWORK::HGOPeer & peer, const HGO::NETWORK::Message &msg)
+void Wallet::_processRequestBlock(const HGO::NETWORK::HGOPeer & peer, const HGO::NETWORK::Message &msg)
 {
     std::istringstream iss(msg.str);
     Block::BLOCK_INDEX idxBlockFrom;
@@ -106,7 +101,7 @@ void MasterNode::_processRequestBlock(const HGO::NETWORK::HGOPeer & peer, const 
     _sendBlocks(peer, idxBlockFrom);
 }
 
-void MasterNode::_sendBlocks(const HGO::NETWORK::HGOPeer & peer, const HGO::CHAIN::Block::BLOCK_INDEX &fromBlock)
+void Wallet::_sendBlocks(const HGO::NETWORK::HGOPeer & peer, const HGO::CHAIN::Block::BLOCK_INDEX &fromBlock)
 {
     Blockchain::BLOCK_LIST _lst = _chain.getChain();
     if(_lst.size() < fromBlock)
@@ -114,7 +109,7 @@ void MasterNode::_sendBlocks(const HGO::NETWORK::HGOPeer & peer, const HGO::CHAI
 
     Blockchain::BLOCK_LIST::const_iterator it = _lst.cbegin() + fromBlock;
     Message msg;
-    msg.header.config.full_header = 0b00011100;
+    msg.header.config.full_header = 0b00001000;
     msg.msg_type = Message::TYPE::NEW_BLOCK;
     while(it != _lst.cend())
     {
@@ -128,12 +123,13 @@ void MasterNode::_sendBlocks(const HGO::NETWORK::HGOPeer & peer, const HGO::CHAI
 
 }
 
-int MasterNode::exec()
+int Wallet::exec()
 {
     unsigned short default_port = 2016;
     std::string tag = "";
     HGOPeer firstPeerToReach;
     std::string chainName = "chain.blk";
+    std::string walletFile = "default.wal";
     
     if(_hasOption("port"))
     {
@@ -155,19 +151,35 @@ int MasterNode::exec()
     {
         chainName = _list["chain"];
     }
-    std::cout << MASTER_NODE_FOOTPRINT<<"\n";
+
+    if(_hasOption("wal"))
+    {
+        walletFile = _list["wal"];
+    }
+
+    std::cout << WALLET_NODE_FOOTPRINT<<"\n";
     std::cout<<"Initialisation ....\n";
     _chain = Blockchain::load(chainName);
+    _chain.eventManager().registerCallback(std::bind(&Wallet::_handleChainEvent, this, _1));
+
+    HGO::TOKEN::Wallet w(_chain);
+    _wallet = &w;
     _network.setTagName(tag);
-    _network.setMasterNode(true);
+    _network.setMasterNode(false);
     _network.startNetwork(default_port);
 
     std::cout<<"HGO Blockchain - \033[32m[Status OK]\033[0m\n";
     if(_chain.getChain().empty()) 
     {
         std::cout<<"Chain is empty and will be synched on network\n";
+    }
+
+    if(!_wallet->unlockWallet(walletFile))
+    {
+        std::cout<<"Could not open the wallet file : "<<walletFile<<"\n";
+        return -1;
     } else {
-        std::cout<<"Current Block : \n"<<_chain.getLastBlock()<<"\n";
+        std::cout<<*_wallet<<"\n";
     }
     
     if(!firstPeerToReach.ip_address.empty())
@@ -175,22 +187,41 @@ int MasterNode::exec()
         _network.connectToNode(firstPeerToReach.ip_address, firstPeerToReach.port);
     }
 
+    std::string command;
+    while(std::cin>>command)
+    {
+        if(command == "q")
+            break;
 
-    while(std::cin.get() != 'q')
-        ;;
+        if(command == "send") {
+            std::string address;
+            long double amount = 0.0L;
+            if(std::cin>>address>>amount) {
+
+                HGO::TOKEN::Transaction tx = _wallet->buildTransaction(address, amount);
+                Message msg;
+                msg.header.config.full_header = 0b00001000;
+                msg.msg_type = Message::TYPE::NEW_TRANSACTION;
+                msg.str = tx.serialize();
+                msg.msg_size = msg.str.size();
+
+                _network.pushTickMessage(nullptr, msg);     
+            }
+        }
+    }
 
     _chain.save(chainName);
     return 0;
 }
 
-bool MasterNode::_hasOption(const std::string & option)
+bool Wallet::_hasOption(const std::string & option)
 {
     return (std::find_if(_list.cbegin(), _list.cend(), [&option](const std::pair<std::string,std::string> &other){
         return other.first==option;
     }) != _list.cend());
 }
 
-void MasterNode::_parseArguments(int argc, char ** argv)
+void Wallet::_parseArguments(int argc, char ** argv)
 {
     if(argc > 1)
     {

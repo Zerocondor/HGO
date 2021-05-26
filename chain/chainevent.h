@@ -15,6 +15,7 @@ namespace HGO::CHAIN::EVENTS
         public:
             ChainEvent() = default;
             virtual std::string eventName() const;
+            virtual const std::string data() const;
             virtual ~ChainEvent() = 0;
     };
 
@@ -22,18 +23,27 @@ namespace HGO::CHAIN::EVENTS
     {
         constexpr static char const * EVENT_NAME = "NEW_BLOCK";
         public:
-            NewBlockEvent() = default;
+            NewBlockEvent() = delete;
+            NewBlockEvent(const Block &block);
+
             virtual std::string eventName() const override;
+            virtual const std::string data() const override;
             virtual ~NewBlockEvent() override;
+        protected:
+            const Block _block;
     };
 
     class NewTransactionEvent : public ChainEvent
     {
         constexpr static char const * EVENT_NAME = "NEW_TRANSACTION";
         public:
-            NewTransactionEvent() = default;
+            NewTransactionEvent() = delete;
+            NewTransactionEvent(const HGO::TOKEN::Transaction &tx);
             virtual std::string eventName() const override;
+            virtual const std::string data() const override;
             virtual ~NewTransactionEvent() override;
+        protected:
+            const HGO::TOKEN::Transaction _tx;
     };
 
     class ChainEventManager

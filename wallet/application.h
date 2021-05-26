@@ -1,5 +1,5 @@
-#ifndef __APP_MASTERNODE__
-#define __APP_MASTERNODE__
+#ifndef __APP_WALLET__
+#define __APP_WALLET__
 #include <HGO>
 #include <string>
 #include <map>
@@ -10,13 +10,13 @@
 namespace HGO::APP
 {
 
-    class MasterNode
+    class Wallet
     {
-            constexpr static char const * MASTER_NODE_FOOTPRINT = "HGO MasterNode version 1.0";
+            constexpr static char const * WALLET_NODE_FOOTPRINT = "HGO Wallet version 1.0";
             using ARGUMENTS = std::map<std::string, std::string>;
         public:
-            MasterNode(int argc, char **argv);
-            ~MasterNode();
+            Wallet(int argc, char **argv);
+            ~Wallet();
 
             int exec();
         protected:
@@ -34,6 +34,7 @@ namespace HGO::APP
             ARGUMENTS _list;
             HGO::CHAIN::Blockchain _chain;
             HGO::NETWORK::P2PServer _network;
+            HGO::TOKEN::Wallet * _wallet;
 
     };
 }

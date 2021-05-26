@@ -3,15 +3,33 @@
 
 
 using namespace HGO::CHAIN::EVENTS;
+using namespace HGO::TOKEN;
 
 std::string ChainEvent::eventName() const{
     return EVENT_NAME;
 }
+const std::string ChainEvent::data() const{
+    return "";
+}
+
+NewBlockEvent::NewBlockEvent(const Block &block)
+:_block(block)
+{}
 std::string NewBlockEvent::eventName() const{
     return EVENT_NAME;
 }
+const std::string NewBlockEvent::data() const{
+    return _block.serialize();
+}
+
+NewTransactionEvent::NewTransactionEvent(const Transaction &tx)
+:_tx(tx)
+{}
 std::string NewTransactionEvent::eventName() const{
     return EVENT_NAME;
+}
+const std::string NewTransactionEvent::data() const{
+    return _tx.serialize();
 }
 
 ChainEvent::~ChainEvent() {}

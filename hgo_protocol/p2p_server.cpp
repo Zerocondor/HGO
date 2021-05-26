@@ -50,7 +50,7 @@ void P2PServer::_tick()
     while(_network.isRunning())
     {
         if(_lockTick.try_lock()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(400));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             if(_buffer.size())
             {
                 auto evt = _buffer.back();

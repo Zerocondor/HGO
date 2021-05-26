@@ -18,6 +18,10 @@ namespace HGO::TOKEN
         std::string to;
         std::string token;
         long double amount;
+
+        //For future implementation check if transaction from signature is valid return always true for the moment
+        inline bool isValid() const { return true; } 
+
         inline std::string serialize() const {
             std::ostringstream oss;
             oss<<"c:"<<token<<"t:"<<time

@@ -44,7 +44,7 @@ void Blockchain::createBlock(Block blk) {
         _chain.push_back(blk);
     }
 
-    EVENTS::NewBlockEvent event;
+    EVENTS::NewBlockEvent event(blk);
     _events.dispatchEvent(event);
 }
 
@@ -126,18 +126,21 @@ void Blockchain::save(const std::string &path) const
     file.close();
 }
 
-bool Blockchain::requestTransaction(const HGO::TOKEN::Transaction & tx)
+bool Blockchain::requestTransaction(const HGO::TOKEN::Transaction & tx, bool forceBlock)
 {
+    if(!tx.isValid())
+        return false;
+
     _txBuffer.push_front(tx);
     
-    EVENTS::NewTransactionEvent event;
+    EVENTS::NewTransactionEvent event(tx);
     _events.dispatchEvent(event);
 
-    _createTransactionBlock();
+    _createTransactionBlock(forceBlock);
     return true;
 }
 
-void Blockchain::_createTransactionBlock()
+void Blockchain::_createTransactionBlock(bool forceBlock)
 {
     if(_txBuffer.size() == MIN_TX_PER_BLOCK)
     {

@@ -29,12 +29,7 @@ bool Wallet::send(const std::string & walletAddress, long double amount)
     if(_balance < amount)
         return false;
 
-    Transaction tx;
-    tx.from = _address;
-    tx.to = walletAddress;
-    tx.amount = amount;
-    tx.time = std::time(nullptr);
-    tx.token = TOKEN_NAME;
+    Transaction tx = buildTransaction(walletAddress, amount);
     if(_chain.requestTransaction(tx))
     {
         _transactions.push_back(tx);
@@ -43,6 +38,17 @@ bool Wallet::send(const std::string & walletAddress, long double amount)
     }
 
     return false;
+}
+
+Transaction Wallet::buildTransaction(const std::string & walletAddress, long double amount) const
+{
+    Transaction tx;
+    tx.from = _address;
+    tx.to = walletAddress;
+    tx.amount = amount;
+    tx.time = std::time(nullptr);
+    tx.token = TOKEN_NAME;
+    return tx;
 }
 
 std::string Wallet::getAddress() const
