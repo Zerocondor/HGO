@@ -37,13 +37,17 @@ bool Wallet::_handleChainEvent(const HGO::CHAIN::EVENTS::ChainEvent &ev)
 void Wallet::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
 {
     using TYPE = Message::TYPE;
+    Block blk;
     switch(msg.msg_type)
     {
         case TYPE::ACQUITED:
             _checkSynchState(peer);  
         break;
         case TYPE::NEW_BLOCK:
-            _chain << Block::unserialize(msg.str);
+            blk = Block::unserialize(msg.str);
+            _wallet->update(blk);
+            std::cout<<*_wallet<<"\n";
+            _chain << blk;
         break;
         case TYPE::REQUEST_BLOCK:
             _processRequestBlock(peer, msg);
@@ -116,11 +120,8 @@ void Wallet::_sendBlocks(const HGO::NETWORK::HGOPeer & peer, const HGO::CHAIN::B
         msg.str = it->serialize();
         msg.msg_size = it->serialize().size();
         _network.pushTickMessage(std::make_shared<HGOPeer>(peer), msg);
-
         ++it;
     }
-
-
 }
 
 int Wallet::exec()

@@ -4,12 +4,12 @@ using namespace HGO::APP;
 using namespace HGO::CHAIN;
 using namespace HGO::NETWORK;
 using namespace HGO::EXCEPTION;
+using namespace std::placeholders;
 
 MasterNode::MasterNode(int argc, char **argv)
 {
     _parseArguments(argc, argv);
-    using namespace std::placeholders;
-    _chain.eventManager().registerCallback(std::bind(&MasterNode::_handleChainEvent, this, _1));
+   
     HGO::NETWORK::P2PServer::MESSAGE_CALLBACK cb = std::bind(&MasterNode::_handleP2PEvent, this, _1, _2);
     _network.setBlockchainHandlers(cb); 
 }
@@ -43,11 +43,11 @@ void MasterNode::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
             _checkSynchState(peer);  
         break;
         case TYPE::NEW_BLOCK:
-            std::cout<<"\033[32m[NEW BLOCK RECEIVED]\n";
+            std::cout<<"\033[32m[NEW BLOCK RECEIVED]\033[0m\n";
             _chain << Block::unserialize(msg.str);
         break;
         case TYPE::NEW_TRANSACTION:
-            std::cout<<"\033[32m[NEW TX RECEIVED] - " <<HGO::TOKEN::Transaction::unserialize(msg.str)<<"\n";
+            std::cout<<"\033[32m[NEW TX RECEIVED] - \033[0m\n" <<HGO::TOKEN::Transaction::unserialize(msg.str)<<"\n";
             _chain.requestTransaction(HGO::TOKEN::Transaction::unserialize(msg.str));
         break;
         case TYPE::REQUEST_BLOCK:
@@ -124,8 +124,6 @@ void MasterNode::_sendBlocks(const HGO::NETWORK::HGOPeer & peer, const HGO::CHAI
 
         ++it;
     }
-
-
 }
 
 int MasterNode::exec()
@@ -158,6 +156,7 @@ int MasterNode::exec()
     std::cout << MASTER_NODE_FOOTPRINT<<"\n";
     std::cout<<"Initialisation ....\n";
     _chain = Blockchain::load(chainName);
+    _chain.eventManager().registerCallback(std::bind(&MasterNode::_handleChainEvent, this, _1));
     _network.setTagName(tag);
     _network.setMasterNode(true);
     _network.startNetwork(default_port);

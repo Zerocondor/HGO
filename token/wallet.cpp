@@ -55,9 +55,30 @@ std::string Wallet::getAddress() const
 {
     return _address;
 }
+
 std::string Wallet::getToken() const
 {
     return TOKEN_NAME;
+}
+
+void Wallet::update(const HGO::CHAIN::Block & blk)
+{
+    T_LIST txns = Blockchain::parseTransactions(blk.getData());
+    if(txns.size()) {
+        for(const Transaction & tx : txns)
+        {
+            if(tx.from == _address || tx.to == _address) {
+                Transaction::Direction tx_type = (tx.from == _address) ? Transaction::OUT : Transaction::IN;
+                if(tx_type == Transaction::IN)
+                {
+                    _balance += tx.amount;
+                } else {
+                    _balance -= tx.amount;
+                }
+                _transactions.push_back(tx);
+            }
+        }
+    }
 }
 
 void Wallet::_retrieveTransactions()
@@ -65,23 +86,7 @@ void Wallet::_retrieveTransactions()
     _balance = 0.0L;
     for( const Block & blk : _chain.getChain())
     {
-        
-        T_LIST txns = Blockchain::parseTransactions(blk.getData());
-        if(txns.size()) {
-            for(const Transaction & tx : txns)
-            {
-                if(tx.from == _address || tx.to == _address) {
-                    Transaction::Direction tx_type = (tx.from == _address) ? Transaction::OUT : Transaction::IN;
-                    if(tx_type == Transaction::IN)
-                    {
-                        _balance += tx.amount;
-                    } else {
-                        _balance -= tx.amount;
-                    }
-                    _transactions.push_back(tx);
-                }
-            }
-        }
+        update(blk);
     }
 }
 
@@ -98,11 +103,6 @@ std::ostream &HGO::TOKEN::operator<<(std::ostream &o, const Wallet & wallet)
 {
     o<<"========= Wallet : "<<wallet.getAddress()<<" ("
     <<std::setprecision(std::numeric_limits<long double>::digits10 + 1)<<wallet.getBalance()<<" "<<wallet.getToken()<<")\n";
-
-    for(const Transaction &t : wallet.getTransactions())
-    {
-        o << t;
-    }
 
     return o.flush();
 

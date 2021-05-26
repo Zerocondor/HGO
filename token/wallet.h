@@ -22,6 +22,7 @@ namespace HGO::TOKEN
             virtual bool unlockWallet(const std::string & walletFile = "");
             virtual bool send(const std::string & walletAddress, long double amount = 0.0);
             virtual Transaction buildTransaction(const std::string & walletAddress, long double amount = 0.0) const;
+            virtual void update(const HGO::CHAIN::Block & block);
             long double getBalance() const;
             std::string getAddress() const;
             std::string getToken() const;
