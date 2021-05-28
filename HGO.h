@@ -22,6 +22,7 @@
 
 #include "token/wallet.h"
 #include "token/transaction.h"
+#include "token/hgo_key.h"
 
 #include "hgo_protocol/network_manager.h"
 #include "hgo_protocol/protocol.h"

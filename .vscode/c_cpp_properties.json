@@ -8,7 +8,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/chain/**",
-                "${LIB_DIR}/include"
+                "${LIB_DIR}/include"               
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

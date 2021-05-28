@@ -5,6 +5,7 @@
 #include <chrono>
 #include <vector>
 #include "../chain/blockchain.h"
+#include "hgo_key.h"
 #include "transaction.h"
 #include <sha256/sha256.h>
 
@@ -37,6 +38,8 @@ namespace HGO::TOKEN
             std::string _address;
             BLOCKCHAIN & _chain;
             T_LIST _transactions;
+            
+            HGO::CRYPTO::KeyPair _key;
     };
 
 

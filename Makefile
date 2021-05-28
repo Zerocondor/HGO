@@ -2,7 +2,7 @@ GCC=g++ -g
 INCLUDES= -I libs/include -I .
 LIB_STATICS=libs/lib/libsha256.a
 LIB_DIR=
-DYNAMIC_LIB= -lpthread
+DYNAMIC_LIB= -lpthread -lssl -lcrypto
 
 TARGET_TESTHGO=testHGO
 SOURCES_TESTHGO=test/testhgo.cpp
@@ -13,7 +13,14 @@ SOURCES_TESTPROTOCOL=test/hgo_protocol.cpp
 TARGET_TESTP2P=testP2p
 SOURCES_TESTP2P=test/testp2p.cpp
 
-SOURCES= chain/block.cpp chain/blockchain.cpp chain/chainevent.cpp exceptions.cpp token/wallet.cpp hgo_protocol/network_manager.cpp hgo_protocol/p2p_server.cpp
+SOURCES= chain/block.cpp \
+chain/blockchain.cpp \
+chain/chainevent.cpp \
+exceptions.cpp \
+token/wallet.cpp \
+token/hgo_key.cpp \
+hgo_protocol/network_manager.cpp \
+hgo_protocol/p2p_server.cpp \
 
 TARGET_MASTERNODE=masternode
 SOURCES_MASTERNODE=masternode/main.cpp masternode/application.cpp
