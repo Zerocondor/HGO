@@ -5,6 +5,7 @@
 #include <deque>
 #include <vector>
 #include <thread>
+#include "../token/transaction.h"
 
 namespace HGO::CHAIN::EVENTS
 {

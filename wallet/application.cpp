@@ -158,6 +158,13 @@ int Wallet::exec()
         walletFile = _list["wal"];
     }
 
+    if(_hasOption("create"))
+    {
+        std::cout<<"Create Wallet on "<<walletFile<<"\n";
+        HGO::TOKEN::Wallet::createWallet(walletFile);
+        return 0;
+    }
+
     std::cout << WALLET_NODE_FOOTPRINT<<"\n";
     std::cout<<"Initialisation ....\n";
     _chain = Blockchain::load(chainName);

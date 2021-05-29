@@ -3,6 +3,9 @@
 
 #include <string>
 #include <fstream>
+#include <iostream>
+#include <assert.h>
+#include <openssl/bn.h>
 #include <memory>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
@@ -24,12 +27,17 @@ namespace HGO::CRYPTO
             std::string getKey(const KEY_TYPE &type) const;
             std::string getPublicKey() const;
             std::string getPrivateKey() const;
+
+            std::string getRawPublicKey() const;
+
             std::string sign(const std::string & data) const;
             bool verify(const std::string & data, const std::string & signature) const;
 
             bool saveFile(const std::string &filename, const KEY_TYPE &type) const;
 
             static bool loadFromFile(KeyPair & key, const std::string &filename, const KEY_TYPE &type);
+            static bool loadFromPEM(KeyPair & key, const std::string &pemStr, const KEY_TYPE &type);
+            static bool loadFromRAWPublicKey(KeyPair & key, const std::string &raw);
             static KeyPair generate();
         protected:
             void _loadKey(EC_KEY ** k, const std::string &pem, const KEY_TYPE &type) const;

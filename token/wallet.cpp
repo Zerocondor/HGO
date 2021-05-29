@@ -1,6 +1,7 @@
 #include "wallet.h"
 #include "../exceptions.h"
 
+using namespace HGO::CRYPTO;
 using namespace HGO::CHAIN;
 using namespace HGO::TOKEN;
 using namespace HGO::EXCEPTION;
@@ -18,10 +19,46 @@ bool Wallet::unlockWallet(const std::string & walletFile)
     std::ifstream wallet(walletFile, std::ios_base::in | std::ios_base::binary);
     if(!wallet)
         throw WalletError("Cannot open wallet file : " + walletFile);
+    
+    std::getline(wallet, _address);
 
-    wallet >> _address;    
+    std::string priv;
+    std::string pub;
+
+    std::string buffer;
+    bool privLoaded = false;
+    while(std::getline(wallet, buffer))
+    {
+        if(buffer == "") {
+            privLoaded = true;
+            continue;
+        }
+        
+        if(privLoaded)
+        {
+            pub += buffer + "\n";
+        } else {
+            priv += buffer + "\n";
+        }
+    }
+    pub.erase(pub.size() - 1, 1);
+    priv.erase(priv.size() - 1, 1);
+    KeyPair k;
+    KeyPair::loadFromPEM(k, pub, KeyPair::KEY_TYPE::PUBLIC);
+    KeyPair::loadFromPEM(k, priv, KeyPair::KEY_TYPE::PRIVATE);
+    _key = k;
     _retrieveTransactions();
     return true;
+}
+
+KeyPair Wallet::getKeys() const
+{
+    return _key;
+}
+void Wallet::signTransaction(Transaction & tx) const
+{
+    tx.signature = _key.sign(tx.getHash());
+    tx.public_key = _key.getRawPublicKey();  
 }
 
 bool Wallet::send(const std::string & walletAddress, long double amount)
@@ -97,7 +134,29 @@ Wallet::T_LIST Wallet::getTransactions() const
 
 Wallet::~Wallet() {}
 
+bool Wallet::createWallet(const std::string walletFile)
+{
+    std::ofstream out (walletFile, std::ios_base::binary);
+    if(out)
+    {
+        KeyPair keys = KeyPair::generate();
+        std::string priv = keys.getPrivateKey();
+        std::string pub = keys.getPublicKey();
+        std::cout<<priv<<"\n"
+        <<pub<<"\n\n";
+        std::string raw = keys.getRawPublicKey();
+        std::string keyDgst = sha256(raw);
 
+        std::cout<<"Wallet Address : "<<keyDgst<<"\n\n";
+        out<<keyDgst<<"\n"<<priv<<"\n"<<pub;
+        if(out)
+        {
+            return true;
+        }
+        return false;
+    }
+    return false;   
+}
 
 std::ostream &HGO::TOKEN::operator<<(std::ostream &o, const Wallet & wallet)
 {

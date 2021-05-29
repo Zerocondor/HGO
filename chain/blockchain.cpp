@@ -61,6 +61,9 @@ void Blockchain::addBlock(Block blk) {
 }
 
 bool Blockchain::verify() const {
+    if(_chain.size() == 1) {
+        return true;
+    }
     BLOCK_LIST::const_iterator it = _chain.cbegin();
     std::string prevHash = "";
     while(it != _chain.cend())

@@ -71,17 +71,19 @@ int main(int argc, char ** argv)
     {
         Block genesis("HGO Genesis block");
         Blockchain chain;
-        chain << genesis;
+        chain.createBlock(genesis);
 
         //Install initial Amounts
         Wallet nicoWallet(chain);
-        nicoWallet.unlockWallet("test/datas/nico.wal");
+        nicoWallet.unlockWallet("niko.wal");
         Transaction baseTx;
-        baseTx.from = Wallet::ANONYMOUS_ADDRESS;
+        baseTx.from = nicoWallet.getAddress();
         baseTx.to = nicoWallet.getAddress();
         baseTx.amount = 60000000000L;
         baseTx.token = "HGO";
         baseTx.time = std::time(nullptr);
+
+        nicoWallet.signTransaction(baseTx);
 
         chain.requestTransaction(baseTx);
         chain.requestTransaction(baseTx);

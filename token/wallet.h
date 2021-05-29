@@ -28,8 +28,12 @@ namespace HGO::TOKEN
             std::string getAddress() const;
             std::string getToken() const;
             T_LIST getTransactions() const;
-            virtual ~Wallet();
+            HGO::CRYPTO::KeyPair getKeys() const;
+            void signTransaction(Transaction & tx) const;
 
+            virtual ~Wallet();
+            
+            static bool createWallet(const std::string walletFile);
         protected:
             virtual void _retrieveTransactions();
 

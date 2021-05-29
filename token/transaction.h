@@ -7,10 +7,12 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include "hgo_key.h"
+
 
 namespace HGO::TOKEN
 {
-     struct Transaction
+    struct Transaction
     {
         enum Direction { IN, OUT } ;
         std::time_t time;
@@ -19,37 +21,13 @@ namespace HGO::TOKEN
         std::string token;
         long double amount;
 
-        //For future implementation check if transaction from signature is valid return always true for the moment
-        inline bool isValid() const { return true; } 
-
-        inline std::string serialize() const {
-            std::ostringstream oss;
-            oss<<"c:"<<token<<"t:"<<time
-            <<"a:"<<std::setprecision(std::numeric_limits<long double>::digits10 + 1)<<amount
-            <<"f:"<<from<<"r:"<<to;
-            return oss.str();
-        }
-        static inline Transaction unserialize(const std::string & serialized) {
-            std::istringstream in(serialized);
-            Transaction tx;
-            char buffer[200]{0};
-            in.ignore(2).read(buffer, 3);
-            tx.token = std::string(buffer);
-            memset(buffer, 0, 3);
-            in.ignore(2);
-            in >> tx.time;
-
-            in.ignore(2);
-            in>> tx.amount;
-
-            in.ignore(2).read(buffer, 30);
-            tx.from = std::string(buffer);
-            memset(buffer, 0, 30);
-            in.ignore(2).read(buffer, 30);
-            tx.to = std::string(buffer);
-            memset(buffer, 0, 30);
-            return tx;
-        }
+        std::string signature;
+        std::string public_key;
+                //For future implementation check if transaction from signature is valid return always true for the moment
+        bool isValid() const;
+        std::string getHash() const;
+        std::string serialize() const;
+        static Transaction unserialize(const std::string & serialized);
     };
 
     inline std::ostream &operator<<(std::ostream &o, const Transaction & transac)
