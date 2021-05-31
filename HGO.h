@@ -6,10 +6,10 @@
  * Custom blockchain to handle HGO Token
  * Based on flat file, easy to use
  * 
- * @todo Implement P2P network
- * @todo Implement Wallet unlock with RSA key to add security
- * @todo Implement inflate/deflate blockchain file
- * @author Nicolas BASTIDE <nicolas.bastide1@gmail.com
+ * @todo Add consensus to choose a Masternode for transaction
+ * @todo Add a fees system to reward validator node
+ * @todo Implement inflate/deflate blockchain file or directly block data to improve data transfer
+ * @author Nicolas BASTIDE <nicolas.bastide1@gmail.com>
  */ 
 
 #define HGO_VERSION_MAJOR 1
