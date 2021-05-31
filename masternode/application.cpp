@@ -33,6 +33,7 @@ bool MasterNode::_handleChainEvent(const HGO::CHAIN::EVENTS::ChainEvent &ev)
 
     return true;
 }
+
 void MasterNode::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
 {
     using TYPE = Message::TYPE;
@@ -126,13 +127,32 @@ void MasterNode::_sendBlocks(const HGO::NETWORK::HGOPeer & peer, const HGO::CHAI
     }
 }
 
+void MasterNode::_printHelp()
+{
+    std::cout<<R"f(
+First master node of the network should be started only as server (omit --peer option)
+
+--port=[Listening port](default 2016)
+--peer=[First node to reach](ip:port)
+--tag=[Name on network]
+--chain=[Filename of the chain] (default "chain.blk")
+)f";
+
+}
+
 int MasterNode::exec()
 {
     unsigned short default_port = 2016;
     std::string tag = "";
     HGOPeer firstPeerToReach;
     std::string chainName = "chain.blk";
-    
+    std::cout<<"\033[034m"<<MASTERNODE_BANNER<<"\033[0m\n";
+    if(_hasOption("help"))
+    {
+        _printHelp();
+        return 0;
+    }
+
     if(_hasOption("port"))
     {
         std::istringstream iss(_list["port"]);

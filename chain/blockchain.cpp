@@ -111,11 +111,18 @@ const Blockchain::BLOCK_LIST & Blockchain::getChain() const
     return _chain;
 }
 
-void Blockchain::save(const std::string &path) const
+void Blockchain::save(const std::string &path)
 {
     if(_chain.empty())
     {
         throw BlockchainException("Chain is Empty, cannot serialize it !");
+    }
+
+    if(_txBuffer.size())
+    {
+        auto tx = _txBuffer.back();
+        _txBuffer.pop_back();
+        requestTransaction(tx, true);
     }
 
     std::ofstream file(path, std::ios_base::out | std::ios_base::binary);
@@ -131,7 +138,7 @@ void Blockchain::save(const std::string &path) const
 
 bool Blockchain::requestTransaction(const HGO::TOKEN::Transaction & tx, bool forceBlock)
 {
-    if(!tx.isValid())
+    if(!tx.isValid() && forceBlock == false)
         return false;
 
     _txBuffer.push_front(tx);
@@ -145,10 +152,10 @@ bool Blockchain::requestTransaction(const HGO::TOKEN::Transaction & tx, bool for
 
 void Blockchain::_createTransactionBlock(bool forceBlock)
 {
-    if(_txBuffer.size() == MIN_TX_PER_BLOCK)
+    if(_txBuffer.size() == MIN_TX_PER_BLOCK || forceBlock)
     {
         std::string blk_data = "TXNs:";
-        for(size_t i = 0; i < MIN_TX_PER_BLOCK; ++i)
+        for(size_t i = 0; i < _txBuffer.size(); ++i)
         {
             std::string txSerialized = _txBuffer.back().serialize();
             blk_data += "tx:" + std::to_string(txSerialized.size()) + txSerialized;

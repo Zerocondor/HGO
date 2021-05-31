@@ -126,12 +126,20 @@ void Wallet::_sendBlocks(const HGO::NETWORK::HGOPeer & peer, const HGO::CHAIN::B
 
 int Wallet::exec()
 {
+    
     unsigned short default_port = 2016;
     std::string tag = "";
     HGOPeer firstPeerToReach;
     std::string chainName = "chain.blk";
     std::string walletFile = "default.wal";
     
+    std::cout<<"\033[32m"<<WALLET_BANNER<<"\033[0m\n";
+    if(_hasOption("help"))
+    {
+        _printHelp();
+        return 0;
+    }
+
     if(_hasOption("port"))
     {
         std::istringstream iss(_list["port"]);
@@ -220,6 +228,20 @@ int Wallet::exec()
 
     _chain.save(chainName);
     return 0;
+}
+
+void Wallet::_printHelp()
+{
+    std::cout<<R"f(
+--create (default "default.wal")
+    Use --wal option to define a specific name
+--port=[Listening port](default 2016)
+--peer=[First node to reach](ip:port)
+--tag=[Name on network]
+--chain=[Filename of the chain] (default "chain.blk")
+--wal=[Filename of wallet] (default "default.wal")
+)f";
+
 }
 
 bool Wallet::_hasOption(const std::string & option)

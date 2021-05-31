@@ -21,7 +21,7 @@ namespace HGO::CHAIN
             using BLOCK_LIST = std::vector<Block>;
             using TRANSACTION_BUFFER = std::deque<HGO::TOKEN::Transaction>;
             using T_LIST = std::vector<HGO::TOKEN::Transaction>;
-            constexpr static TRANSACTION_BUFFER::size_type MIN_TX_PER_BLOCK = 2;
+            constexpr static TRANSACTION_BUFFER::size_type MIN_TX_PER_BLOCK = 5;
             
         public:
             Blockchain();
@@ -38,7 +38,7 @@ namespace HGO::CHAIN
             const Block &getLastBlock() const;
             const Block::BLOCK_INDEX getLastBlockID() const; 
             const BLOCK_LIST &getChain() const;
-            void save(const std::string &path) const;
+            void save(const std::string &path);
             
             bool requestTransaction(const HGO::TOKEN::Transaction &tx, bool forceBlock = false);
             

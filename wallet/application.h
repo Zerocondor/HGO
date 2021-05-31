@@ -31,6 +31,8 @@ namespace HGO::APP
 
             bool _handleChainEvent(const HGO::CHAIN::EVENTS::ChainEvent &ev);
             void _handleP2PEvent(const HGO::NETWORK::HGOPeer &peer, const HGO::NETWORK::Message &msg);
+
+            void _printHelp();
             ARGUMENTS _list;
             HGO::CHAIN::Blockchain _chain;
             HGO::NETWORK::P2PServer _network;

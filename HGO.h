@@ -14,6 +14,7 @@
 
 #define HGO_VERSION_MAJOR 1
 #define HGO_VERSION_MINOR 0
+#include "various/banner.h"
 
 #include "exceptions.h"
 #include "chain/block.h"
