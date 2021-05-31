@@ -161,10 +161,11 @@ void callback(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, 
 }
 */
 
-void msg(const Message &msg)
+void msg(const HGO::NETWORK::HGOPeer &p, const Message &msg)
 {
     std::cout<<"From CB"<<msg<<"\n";
 }
+
 
 int main(int argc, char ** argv)
 {
@@ -185,7 +186,7 @@ int main(int argc, char ** argv)
 
     P2PServer p(tag, masternode);
 
-    p.setBlockchainHandlers(msg, msg);
+    p.setBlockchainHandlers(msg);
     if(hasOption(_cmd, "srv"))
     {
         std::istringstream iss(_cmd["srv"]);

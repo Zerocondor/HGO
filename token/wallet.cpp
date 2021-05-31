@@ -105,11 +105,18 @@ void Wallet::update(const HGO::CHAIN::Block & blk)
         for(const Transaction & tx : txns)
         {
             if(tx.from == _address || tx.to == _address) {
-                Transaction::Direction tx_type = (tx.from == _address) ? Transaction::OUT : Transaction::IN;
+                Transaction::Direction tx_type = Transaction::Direction::BOTH;
+                if (tx.from != tx.to) {
+                    if(tx.from == _address) {
+                        tx_type = Transaction::Direction::OUT;
+                    } else {
+                        tx_type = Transaction::Direction::IN;
+                    }
+                }
                 if(tx_type == Transaction::IN)
                 {
                     _balance += tx.amount;
-                } else {
+                } else if(tx_type == Transaction::OUT) {
                     _balance -= tx.amount;
                 }
                 _transactions.push_back(tx);

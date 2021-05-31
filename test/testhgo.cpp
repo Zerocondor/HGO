@@ -84,10 +84,10 @@ int main(int argc, char ** argv)
         baseTx.time = std::time(nullptr);
 
         nicoWallet.signTransaction(baseTx);
-
-        chain.requestTransaction(baseTx);
-        chain.requestTransaction(baseTx);
-
+        chain.requestTransaction(Transaction::unserialize(baseTx.serialize()));
+        chain.requestTransaction(Transaction::unserialize(baseTx.serialize()));
+        //chain.requestTransaction(baseTx);
+        //chain.requestTransaction(baseTx);
         chain.save("blk.chain");
     }
 
@@ -100,8 +100,7 @@ int main(int argc, char ** argv)
             wal.unlockWallet(commands["wallet"]);
             std::cout<<wal;
 
-            Wallet test(chain);
-            test.unlockWallet("test/datas/other.wal");
+            
 
             chain.eventManager().registerCallback([&wal](const EVENTS::ChainEvent &ev) -> bool {
                 if(ev.eventName() == "NEW_BLOCK") {
@@ -113,9 +112,8 @@ int main(int argc, char ** argv)
             
             
             std::cin.get();
-            wal.send(test.getAddress(), 355.23L);
-            wal.send(test.getAddress(), 100.23L);
-            std::cin.get();
+   
+            
         }
         
         

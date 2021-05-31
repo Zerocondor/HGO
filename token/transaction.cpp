@@ -14,8 +14,9 @@ bool Transaction::isValid() const {
     {
         return keys.verify(getHash(), signature);
     } else {
-        false;
+        return false;
     }
+    return false;
 }
 
 
@@ -32,11 +33,23 @@ std::string Transaction::serialize() const {
     <<"a:"<<std::setprecision(std::numeric_limits<long double>::digits10 + 1)<<amount
     <<"f:"<<from<<"r:"<<to
     <<"k:";
-    oss.write(public_key.c_str(), public_key.size());
-    oss<<"s:"<<signature.size()<<" ";
-    oss.write(signature.c_str(), signature.size());
+    std::ios_base::fmtflags fl = oss.flags();
+   
+    for(const unsigned char &c : public_key)
+    {
+        oss<<std::hex<<std::setfill('0')<<std::setw(2)<<(int)c;
+    }
+    oss.flags(fl);   
+    oss<<"s:";
+
+    for(const unsigned char &c : signature)
+    {
+        oss<<std::hex<<std::setfill('0')<<std::setw(2)<<(int)c;
+    }
+    oss.flags(fl);
     return oss.str();
 }
+
 Transaction Transaction::unserialize(const std::string & serialized) {
     std::istringstream in(serialized);
     Transaction tx;
@@ -50,23 +63,36 @@ Transaction Transaction::unserialize(const std::string & serialized) {
     in.ignore(2);
     in>> tx.amount;
 
-    in.ignore(2).read(buffer, 32);
-    tx.from = std::string(buffer, 32);
-    memset(buffer, 0, 32);
+    in.ignore(2).read(buffer, 64);
+    tx.from = std::string(buffer, 64);
+    memset(buffer, 0, 64);
 
-    in.ignore(2).read(buffer, 32);
-    tx.to = std::string(buffer, 32);
-    memset(buffer, 0, 32);
+    in.ignore(2).read(buffer, 64);
+    tx.to = std::string(buffer, 64);
+    memset(buffer, 0, 64);
 
-    in.ignore(2).read(buffer, 33);
-    tx.public_key = std::string(buffer, 33);
-    memset(buffer, 0, 33);
+    in.ignore(2).read(buffer, 66);
+    tx.public_key = "";
+ 
+    for(int i = 0; i < 33; ++i)
+    {
+        unsigned char byte = std::stoi(std::string(buffer + (i * 2),buffer + (i * 2) + 2),0, 16);
+        tx.public_key += byte;
+    }
+    std::cout.flush();
+    memset(buffer, 0, 66);
 
-    in.ignore(2);
-    std::string::size_type sz;
-    in>> sz;
-    in.get(buffer,sz);
-    tx.signature = std::string(buffer, sz);
-
+    in.ignore(3, ':');
+    std::string signature;
+    in>>signature;
+    tx.signature = "";
+    std::cout.flush();
+    for(int i = 0; i < signature.size() / 2; ++i)
+    {
+        std::string hex(signature.cbegin() + (i * 2),signature.cbegin() + (i * 2) + 2);
+        unsigned char byte = std::stoi(hex,0,16);
+        tx.signature += byte;
+    }
+    
     return tx;
 }
