@@ -233,6 +233,11 @@ int Wallet::exec()
 void Wallet::_printHelp()
 {
     std::cout<<R"f(
+When wallet is running send command should be used to send token to another wallet address
+    send [addr] [amount]
+
+    ex: send 8aff694da3f2ed5e28214d1daab42e7401fbc99b119e281a2e72a0d8a6f1290f 30000.21155
+
 --create (default "default.wal")
     Use --wal option to define a specific name
 --port=[Listening port](default 2016)
