@@ -41,11 +41,17 @@ bool Wallet::unlockWallet(const std::string & walletFile)
             priv += buffer + "\n";
         }
     }
-    pub.erase(pub.size() - 1, 1);
-    priv.erase(priv.size() - 1, 1);
+
     KeyPair k;
-    KeyPair::loadFromPEM(k, pub, KeyPair::KEY_TYPE::PUBLIC);
-    KeyPair::loadFromPEM(k, priv, KeyPair::KEY_TYPE::PRIVATE);
+    if(!pub.empty()) {
+        pub.erase(pub.size() - 1, 1);
+        KeyPair::loadFromPEM(k, pub, KeyPair::KEY_TYPE::PUBLIC);
+    }
+    if(!priv.empty()) {
+        priv.erase(priv.size() - 1, 1);
+        KeyPair::loadFromPEM(k, priv, KeyPair::KEY_TYPE::PRIVATE);
+    }
+    
     _key = k;
     _retrieveTransactions();
     return true;

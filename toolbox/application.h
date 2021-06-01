@@ -16,7 +16,10 @@ namespace HGO::APP
             int exec();
         protected:
 
-            void _initBlockchain(const std::string &filename, const std::string & genesis_block_data, const std::string & addr = "", const long double & amout = 0.0L);
+            void _initBlockchain(const std::string &filename, const std::string & genesis_block_data, const std::string & addr = "", const long double & amout = 0.0L) const;
+            void _readWallet(const std::string &filename, const std::string & chainFileName="") const;
+            void _exploreChain(const std::string &filename, const HGO::CHAIN::Block::BLOCK_INDEX & idx) const;
+            void _exploreChain(const std::string &filename) const;
 
             void _parseArguments(int argc, char ** argv);
             bool _hasOption(const std::string &option);
@@ -24,9 +27,6 @@ namespace HGO::APP
             void _printHelp();
 
             ARGUMENTS _list;
-            HGO::CHAIN::Blockchain _chain;
-            HGO::NETWORK::P2PServer _network;
-
     };
 }
 

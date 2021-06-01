@@ -20,16 +20,25 @@ void Toolbox::_printHelp()
     std::cout<<R"f(
 Some tools to manage HGO Blockchain
 
+######### Blockchain initialisation #########
 --init=[Blockchain Filename] (Create new blockchain defaultname chain.blk)
 --wal_address=[Address] (Target address)
 --amount=[Amount] (amount to send on --wal_address on --init)
 --genesis_data=[Data] (Raw data to fill the genesis block)
 
+######### Wallet Management #########
+--create=[WalletFilename] (Create a new wallet)
+--wallet=[Wallet Filename] (display wallet information)
+--print_transaction==[chain filename] (print all transaction attached to the wallet in the chain)
+
+######### Blockchain explorer #########
+--chain=[Chain filename]
+--print_block=[blockid]
 )f";
 
 }
 
-void Toolbox::_initBlockchain(const std::string &filename, const std::string & genesis_block_data, const std::string & addr, const long double & amount)
+void Toolbox::_initBlockchain(const std::string &filename, const std::string & genesis_block_data, const std::string & addr, const long double & amount) const
 {
     Blockchain chain;
     Block blk(genesis_block_data);
@@ -54,6 +63,48 @@ void Toolbox::_initBlockchain(const std::string &filename, const std::string & g
     }
 
     chain.save(filename);
+}
+
+void Toolbox::_readWallet(const std::string &filename, const std::string & chainFileName) const
+{
+    Blockchain chain;
+    if(chainFileName.empty())
+    {
+        HGO::TOKEN::Wallet wallet (chain);
+        wallet.unlockWallet(filename);
+        std::cout<<"Wallet Address: "<<wallet.getAddress()<<"\n"
+        <<((wallet.getKeys().hasPrivate()) ? "Private Key is available\n" : "Private key is not available\n")
+        <<((wallet.getKeys().hasPublic()) ? "Public Key is available\n" : "Public key is not available\n");
+    } else {
+        chain = Blockchain::load(chainFileName);
+        HGO::TOKEN::Wallet wallet (chain);
+        wallet.unlockWallet(filename);
+        std::cout<<wallet<<"\n"
+        <<((wallet.getKeys().hasPrivate()) ? "Private Key is available\n" : "Private key is not available\n")
+        <<((wallet.getKeys().hasPublic()) ? "Public Key is available\n" : "Public key is not available\n");
+        for(const auto & tx : wallet.getTransactions())
+        {
+            std::cout<<tx<<"\n";
+        }
+    }
+}
+
+void Toolbox::_exploreChain(const std::string &filename, const HGO::CHAIN::Block::BLOCK_INDEX & idx) const
+{
+    Blockchain chain = Blockchain::load(filename);
+    if(chain.getChain().size() > idx) 
+    {
+        std::cout<<chain.getChain()[idx];
+    } else {
+        std::cout<<" Block ID : "<<idx<< "is not available, last block ID is: "<<chain.getLastBlockID()<<"\n";
+    }
+    
+}
+
+void Toolbox::_exploreChain(const std::string &filename) const
+{
+    Blockchain chain = Blockchain::load(filename);
+    std::cout<<chain<<"\n";
 }
 
 int Toolbox::exec()
@@ -103,6 +154,34 @@ int Toolbox::exec()
             _initBlockchain(_list["init"], genesis_block_data);
         }
     }
+
+    if(_hasOption("create") && !_list["create"].empty())
+    {
+        HGO::TOKEN::Wallet::createWallet(_list["create"]);
+    }
+
+    if(_hasOption("wallet") && !_list["wallet"].empty())
+    {
+        _readWallet(_list["wallet"],_list["print_transaction"]);
+    }
+
+    if(_hasOption("chain") && !_list["chain"].empty())
+    {
+        if(_hasOption("print_block") && !_list["print_block"].empty())
+        {
+            HGO::CHAIN::Block::BLOCK_INDEX idx;
+            std::istringstream iss(_list["print_block"]);
+            if(iss >> idx) {
+                _exploreChain(_list["chain"], idx);
+            } else {
+                _exploreChain(_list["chain"]);
+            }
+        } else {
+            _exploreChain(_list["chain"]);
+        }
+    }
+
+    
 
     
     return 0;

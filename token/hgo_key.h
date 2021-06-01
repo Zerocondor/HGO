@@ -27,6 +27,8 @@ namespace HGO::CRYPTO
             std::string getKey(const KEY_TYPE &type) const;
             std::string getPublicKey() const;
             std::string getPrivateKey() const;
+            inline bool hasPrivate() const {return !_priv_key.empty();}
+            inline bool hasPublic() const {return !_pub_key.empty();}
 
             std::string getRawPublicKey() const;
 
