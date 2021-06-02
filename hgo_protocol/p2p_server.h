@@ -31,6 +31,9 @@ namespace HGO::NETWORK
 
             void pushTickMessage(std::shared_ptr<HGOPeer>peer, Message msg);
 
+            HGONetworkManager &getNetworkManager();
+            std::shared_ptr<HGOPeer> getRandomMasterNode();
+
         protected :
             void _p2phandler(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data, HGONetworkManager * server);
             void _processMessage(const HGOPeer &p, const Message &msg);

@@ -213,7 +213,11 @@ int Wallet::exec()
             std::string address;
             long double amount = 0.0L;
             if(std::cin>>address>>amount) {
-
+                if(_wallet->getBalance() < amount)
+                {
+                    std::cout<<"Not enough token to send, your balance is : "<<_wallet->getBalance()<<_wallet->getToken()<<"\n";
+                    continue;
+                }
                 HGO::TOKEN::Transaction tx = _wallet->buildTransaction(address, amount);
                 _wallet->signTransaction(tx);
                 Message msg;
@@ -221,8 +225,8 @@ int Wallet::exec()
                 msg.msg_type = Message::TYPE::NEW_TRANSACTION;
                 msg.str = tx.serialize();
                 msg.msg_size = msg.str.size();
-
-                _network.pushTickMessage(nullptr, msg);     
+                std::shared_ptr<HGOPeer> randomisedMasternode = _network.getRandomMasterNode();
+                _network.pushTickMessage(randomisedMasternode, msg);     
             }
         }
     }

@@ -47,7 +47,7 @@ void P2PServer::stopNetwork()
 
 void P2PServer::_tick()
 {
-    while(_network.isRunning())
+    while(_network.isRunning() || _buffer.size())
     {
         if(_lockTick.try_lock()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -85,7 +85,7 @@ bool P2PServer::_requestPeerInfos(HGOPeer &p)
     portMessage.header.config.flags.isResponse = false;
     portMessage.header.config.flags.isMasterNode = _isMasterNode;
     portMessage.header.config.flags.isOfficialNode =  true;
-    portMessage.header.config.flags.isTest = true;
+    portMessage.header.config.flags.isTest = false;
     portMessage.header.config.flags.isForward = false;
 
     portMessage.msg_type = Message::TYPE::PEER_INFORMATIONS;
@@ -122,7 +122,7 @@ bool P2PServer::_requestPeerList(const HGOPeer &p)
     peerListRequest.header.config.flags.isResponse = false;
     peerListRequest.header.config.flags.isMasterNode = _isMasterNode;
     peerListRequest.header.config.flags.isOfficialNode =  true;
-    peerListRequest.header.config.flags.isTest = true;
+    peerListRequest.header.config.flags.isTest = false;
     peerListRequest.header.config.flags.isForward = false;
 
     peerListRequest.msg_type = Message::TYPE::PEER_LIST;
@@ -172,7 +172,7 @@ bool P2PServer::_sendAcquitment(const HGOPeer & peer)
     msg.header.config.flags.isResponse = false;
     msg.header.config.flags.isMasterNode = _isMasterNode;
     msg.header.config.flags.isOfficialNode =  true;
-    msg.header.config.flags.isTest = true;
+    msg.header.config.flags.isTest = false;
     msg.header.config.flags.isForward = false;
     msg.msg_type = Message::TYPE::ACQUITED;
     msg.msg_size = 0;
@@ -194,7 +194,7 @@ void P2PServer::_processMessage(const HGOPeer &p, const Message & msg)
     response.header.config.flags.isResponse = true;
     response.header.config.flags.isMasterNode = _isMasterNode;
     response.header.config.flags.isOfficialNode =  true;
-    response.header.config.flags.isTest = true;
+    response.header.config.flags.isTest = false;
     response.header.config.flags.isForward = false;
     
     std::string str = "";
@@ -273,6 +273,32 @@ void P2PServer::broadcast(const Message &msg)
 void P2PServer::setBlockchainHandlers(MESSAGE_CALLBACK message_handler)
 {
      _messagesHandler = message_handler;
+}
+
+HGONetworkManager &P2PServer::getNetworkManager()
+{
+    return _network;
+}
+
+std::shared_ptr<HGOPeer> P2PServer::getRandomMasterNode()
+{
+
+    HGONetworkManager::PEER_LIST _masterNodesLst, peers = _network.getPeerList();
+    for(const auto & peer : peers)
+    {
+        if(peer.isMasterNode)
+        {
+            _masterNodesLst.push_back(peer);
+        }
+    }
+
+    if(_masterNodesLst.empty()) {
+        return nullptr;
+    }
+
+    int idx = rand() % _masterNodesLst.size();
+
+    return std::make_shared<HGOPeer>(_masterNodesLst[idx]);
 }
 
 void P2PServer::_p2phandler(const HGOPeer &peer, const HGONetworkManager::EVENT_TYPE & event, const std::string &data, HGONetworkManager * server)

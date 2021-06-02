@@ -34,10 +34,10 @@ namespace HGO::NETWORK
 {
     struct HGOPeer
     {
-        std::string peer_tag; //For future implementation
+        std::string peer_tag;
         std::string ip_address;
         unsigned short port;
-        bool isMasterNode; //for future implementation
+        bool isMasterNode; 
         inline bool operator==(const HGOPeer &o) const {return (o.ip_address == ip_address && o.port == port);}
         inline static HGOPeer fromString(const std::string &str)
         {

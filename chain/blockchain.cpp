@@ -141,6 +141,8 @@ bool Blockchain::requestTransaction(const HGO::TOKEN::Transaction & tx, bool for
     if(!tx.isValid() && forceBlock == false)
         return false;
 
+    //Todo Check balance before validating the transaction
+
     _txBuffer.push_front(tx);
     
     EVENTS::NewTransactionEvent event(tx);
