@@ -215,6 +215,7 @@ int Wallet::exec()
             if(std::cin>>address>>amount) {
 
                 HGO::TOKEN::Transaction tx = _wallet->buildTransaction(address, amount);
+                _wallet->signTransaction(tx);
                 Message msg;
                 msg.header.config.full_header = 0b00001000;
                 msg.msg_type = Message::TYPE::NEW_TRANSACTION;

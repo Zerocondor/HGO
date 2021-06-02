@@ -48,7 +48,7 @@ void MasterNode::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
             _chain << Block::unserialize(msg.str);
         break;
         case TYPE::NEW_TRANSACTION:
-            std::cout<<"\033[32m[NEW TX RECEIVED] - \033[0m\n" <<HGO::TOKEN::Transaction::unserialize(msg.str)<<"\n";
+            std::cout<<"\033[32m[NEW TX RECEIVED] - \033[0m\n" <<HGO::TOKEN::Transaction::unserialize(msg.str)<<"\n";      
             _chain.requestTransaction(HGO::TOKEN::Transaction::unserialize(msg.str));
         break;
         case TYPE::REQUEST_BLOCK:

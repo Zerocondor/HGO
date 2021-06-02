@@ -91,6 +91,7 @@ Transaction Wallet::buildTransaction(const std::string & walletAddress, long dou
     tx.amount = amount;
     tx.time = std::time(nullptr);
     tx.token = TOKEN_NAME;
+    
     return tx;
 }
 
