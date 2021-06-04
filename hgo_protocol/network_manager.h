@@ -28,7 +28,13 @@
 
 #include <errno.h>
 
+//Socket read buffer size
 #define __HGO_NETWORK__READ_BUFFER 4096
+
+//Max peer that an application should handle
+#ifndef __HGO_NETWORK__MAX_PEER
+    #define __HGO_NETWORK__MAX_PEER 1
+#endif
 
 namespace HGO::NETWORK
 {
@@ -71,7 +77,7 @@ namespace HGO::NETWORK
     {
             protected:
                 using POLL_LIST = std::vector<pollfd>;
-                constexpr static unsigned int MAX_PEERS = 150;
+                constexpr static unsigned int MAX_PEERS = __HGO_NETWORK__MAX_PEER;
             
             public:
                 using PEER_LIST = std::vector<HGOPeer>;

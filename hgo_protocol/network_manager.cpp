@@ -8,7 +8,9 @@ std::mutex HGONetworkManager::_mut;
 
 HGONetworkManager::HGONetworkManager() 
 : _running(false), _socket_server(-1), _port(DEFAULT_PORT)
-{}
+{
+    std::cout<<"MAX PEER ACCEPTED : "<<MAX_PEERS<<"\n";
+}
 
 HGONetworkManager::~HGONetworkManager()
 {

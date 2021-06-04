@@ -38,6 +38,7 @@ void Wallet::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
 {
     using TYPE = Message::TYPE;
     Block blk;
+    HGO::TOKEN::Transaction tx;
     switch(msg.msg_type)
     {
         case TYPE::ACQUITED:
@@ -48,6 +49,19 @@ void Wallet::_handleP2PEvent(const HGOPeer &peer, const Message &msg)
             _wallet->update(blk);
             std::cout<<*_wallet<<"\n";
             _chain << blk;
+        break;
+        case TYPE::NEW_TRANSACTION:
+            
+            tx = HGO::TOKEN::Transaction::unserialize(msg.str);
+            /**
+             * This will handle Transaction that cant reach masternode, so try to check if we have masternode in our peer
+             * In the same way if no masternode has been reached we will try to forward to other peer in order to reach a masternode
+             **/
+            if(msg.header.config.flags.isForward)
+            {
+                std::shared_ptr<HGOPeer> randomisedMasternode = _network.getRandomMasterNode();
+                _network.pushTickMessage(randomisedMasternode, msg);
+            }
         break;
         case TYPE::REQUEST_BLOCK:
             _processRequestBlock(peer, msg);
@@ -221,10 +235,15 @@ int Wallet::exec()
                 HGO::TOKEN::Transaction tx = _wallet->buildTransaction(address, amount);
                 _wallet->signTransaction(tx);
                 Message msg;
-                msg.header.config.full_header = 0b00001000;
+                msg.header.config.full_header = 0b10011000;
                 msg.msg_type = Message::TYPE::NEW_TRANSACTION;
                 msg.str = tx.serialize();
                 msg.msg_size = msg.str.size();
+
+                /**
+                 * If no Masternode is in peer list, it will be broadcasted to everypeer 
+                 * and other peer should try to reach a masternode to forward tx message
+                 */
                 std::shared_ptr<HGOPeer> randomisedMasternode = _network.getRandomMasterNode();
                 _network.pushTickMessage(randomisedMasternode, msg);     
             }

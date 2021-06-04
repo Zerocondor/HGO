@@ -9,6 +9,10 @@
 #include "chainevent.h"
 #include "block.h"
 
+#ifndef __HGO_BLOCKCHAIN__MINTXBLOCK
+#define __HGO_BLOCKCHAIN__MINTXBLOCK 15
+#endif
+
 namespace HGO::CHAIN
 {
 
@@ -21,7 +25,7 @@ namespace HGO::CHAIN
             using BLOCK_LIST = std::vector<Block>;
             using TRANSACTION_BUFFER = std::deque<HGO::TOKEN::Transaction>;
             using T_LIST = std::vector<HGO::TOKEN::Transaction>;
-            constexpr static TRANSACTION_BUFFER::size_type MIN_TX_PER_BLOCK = 5;
+            constexpr static TRANSACTION_BUFFER::size_type MIN_TX_PER_BLOCK = __HGO_BLOCKCHAIN__MINTXBLOCK;
             
         public:
             Blockchain();
