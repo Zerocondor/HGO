@@ -1,3 +1,4 @@
+[![C/C++ CI](https://github.com/Zerocondor/HGO/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/Zerocondor/HGO/actions/workflows/c-cpp.yml)
 # HGO Blockchain Basics
 
 A simple implementation of blockchain
