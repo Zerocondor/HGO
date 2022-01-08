@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name : Create outputdir
+      run: mkdir bin
     - name: Make Master node
       run: make masternode
     - name: make Wallet
