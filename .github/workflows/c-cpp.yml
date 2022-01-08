@@ -1,0 +1,21 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+
+    runs-on: debian-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Make Master node
+      run: make masternode
+    - name: make Wallet
+      run: make wallet
+    - name: make the toolbox
+      run: make toolbox
